@@ -24,3 +24,10 @@
 - Added Stocks navigation link and created placeholder page outlining future inventory functionality to avoid empty route.
 
 
+- Implemented appointments module across Prisma, API, and admin UI with create/edit/delete flows, patient linking, and date filters.
+- Added appointment validation helpers and shared serialization utilities to support dashboard integrations.
+
+
+- Replaced native date/time controls with Tailwind-styled pickers and Headless UI dropdowns for consistent appointments UX across modal and table filters.
+
+

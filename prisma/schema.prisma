@@ -48,6 +48,8 @@ model Appointment {
   updatedAt DateTime @updatedAt
 
   patient Patient @relation(fields: [patientId], references: [id], onDelete: Cascade)
+
+  @@index([date, time], map: "idx_appointments_date_time")
 }
 
 model Session {
@@ -78,4 +80,6 @@ model SessionTreatment {
   session   Session   @relation(fields: [sessionId], references: [id], onDelete: Cascade)
   treatment Treatment @relation(fields: [treatmentId], references: [id], onDelete: Restrict)
 }
+
+
 
