@@ -17,3 +17,6 @@
 - Restructured protected layout for sticky sidebar/header and applied migration for loyalty tracking.
 
 
+- Simplified patient and treatment modals by removing duplicate close controls.
+
+

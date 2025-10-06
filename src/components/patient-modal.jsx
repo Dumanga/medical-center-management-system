@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
@@ -92,7 +92,7 @@ export default function PatientModal({ isOpen, onClose, onSuccess, initialPatien
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/20 px-4 py-8 backdrop-blur">
       <div className="w-full max-w-lg rounded-3xl border border-slate-100 bg-white p-6 shadow-2xl">
-        <div className="flex items-start justify-between">
+        <div className="flex items-start">
           <div>
             <h2 className="text-xl font-semibold text-slate-900">{isEditing ? 'Update Patient' : 'Add New Patient'}</h2>
             <p className="mt-1 text-sm text-slate-600">
@@ -101,14 +101,6 @@ export default function PatientModal({ isOpen, onClose, onSuccess, initialPatien
                 : 'Capture patient contact information to streamline future appointments.'}
             </p>
           </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="rounded-full px-2 py-1 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600"
-            aria-label="Close"
-          >
-            Close
-          </button>
         </div>
 
         <form onSubmit={handleSubmit} className="mt-6 space-y-4">
@@ -203,3 +195,4 @@ export default function PatientModal({ isOpen, onClose, onSuccess, initialPatien
     </div>
   );
 }
+
