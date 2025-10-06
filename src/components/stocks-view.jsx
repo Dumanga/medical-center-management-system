@@ -13,6 +13,7 @@ const DEFAULT_META = {
   query: '',
   typeId: null,
   inventoryValue: 0,
+  expectedRevenue: 0,
 };
 
 function formatCurrency(amount) {
@@ -224,10 +225,7 @@ export default function StocksView({ initialData, initialMeta, initialTypes }) {
     ...types.map((type) => ({ value: String(type.id), label: type.name })),
   ], [types]);
   const inventoryValue = useMemo(() => meta.inventoryValue ?? 0, [meta.inventoryValue]);
-  const pageValue = useMemo(
-    () => stocks.reduce((sum, stock) => sum + (stock.quantity ?? 0) * (stock.sellingPrice ?? 0), 0),
-    [stocks],
-  );
+  const expectedRevenue = useMemo(() => meta.expectedRevenue ?? 0, [meta.expectedRevenue]);
 
   const hasTypes = totalTypes > 0;
 
@@ -273,8 +271,8 @@ export default function StocksView({ initialData, initialMeta, initialTypes }) {
           <p className="mt-2 text-2xl font-semibold text-slate-900">{formatCurrency(inventoryValue)}</p>
         </div>
         <div className="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm">
-          <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Value (This Page)</p>
-          <p className="mt-2 text-2xl font-semibold text-slate-900">{formatCurrency(pageValue)}</p>
+          <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Expected Revenue</p>
+          <p className="mt-2 text-2xl font-semibold text-slate-900">{formatCurrency(expectedRevenue)}</p>
         </div>
       </div>
 
@@ -408,5 +406,4 @@ export default function StocksView({ initialData, initialMeta, initialTypes }) {
     </section>
   );
 }
-
 

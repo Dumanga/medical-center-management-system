@@ -64,7 +64,7 @@ export async function GET(request) {
 
     const where = buildWhere(query, typeId);
 
-    const [totalCount, stocks, inventoryValueRows] = await Promise.all([
+    const [totalCount, stocks, inventoryValueRows, expectedRevenueRows] = await Promise.all([
       prisma.medicineStock.count({ where }),
       prisma.medicineStock.findMany({
         where,
@@ -76,12 +76,14 @@ export async function GET(request) {
         take: pageSize,
       }),
       prisma.$queryRaw`SELECT COALESCE(SUM(quantity * incomingPrice), 0) AS totalValue FROM MedicineStock`,
+      prisma.$queryRaw`SELECT COALESCE(SUM(quantity * sellingPrice), 0) AS totalRevenue FROM MedicineStock`,
     ]);
 
     const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
     const inventoryValueRow = Array.isArray(inventoryValueRows) ? inventoryValueRows[0] : inventoryValueRows;
     const inventoryValue = decimalToNumber(inventoryValueRow?.totalValue ?? 0) ?? 0;
-
+    const expectedRevenueRow = Array.isArray(expectedRevenueRows) ? expectedRevenueRows[0] : expectedRevenueRows;
+    const expectedRevenue = decimalToNumber(expectedRevenueRow?.totalRevenue ?? 0) ?? 0;
 
     const data = stocks.map((stock) => ({
       id: stock.id,
@@ -111,6 +113,7 @@ export async function GET(request) {
         query,
         typeId,
         inventoryValue,
+        expectedRevenue,
       },
     });
   } catch (error) {

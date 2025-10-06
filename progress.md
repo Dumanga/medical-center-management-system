@@ -41,6 +41,8 @@
 - Added fallback Prisma client fix script and postinstall hook to keep Turbopack builds working after dependency reinstalls.
 - Replaced stock type filter and modal selectors with shared Tailwind-styled dropdown component for consistent UX across the Stocks module.
 - Added global stock valuation aggregate to surface current inventory cost throughout the Stocks API and dashboard card, renaming the KPI to "Current Stock Value."
+- Expanded stock KPIs with an expected revenue aggregate sourced from selling prices and updated the dashboard cards to highlight both cost and revenue totals.
+
 
 
 
