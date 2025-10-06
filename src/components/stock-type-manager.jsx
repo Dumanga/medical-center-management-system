@@ -78,7 +78,7 @@ export default function StockTypeManager({ isOpen, onClose, types, onRefresh }) 
           </button>
         </div>
 
-        <form onSubmit={handleAddType} className="mt-6 flex flex-col gap-3 rounded-2xl border border-slate-100 bg-slate-50/60 p-4 sm:flex-row sm:items-center">
+        <form onSubmit={handleAddType} className="mt-6 flex flex-col gap-3 rounded-2xl border border-slate-100 bg-slate-50/60 p-4 sm:flex-row sm:items-end sm:gap-4">
           <div className="flex-1">
             <label htmlFor="medicine-type-name" className="block text-xs font-semibold uppercase tracking-wide text-slate-500">
               New Medicine Type
@@ -154,3 +154,4 @@ export default function StockTypeManager({ isOpen, onClose, types, onRefresh }) 
     </div>
   );
 }
+
