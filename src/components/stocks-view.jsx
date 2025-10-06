@@ -12,6 +12,7 @@ const DEFAULT_META = {
   totalPages: 1,
   query: '',
   typeId: null,
+  inventoryValue: 0,
 };
 
 function formatCurrency(amount) {
@@ -222,10 +223,7 @@ export default function StocksView({ initialData, initialMeta, initialTypes }) {
     { value: '', label: 'All types' },
     ...types.map((type) => ({ value: String(type.id), label: type.name })),
   ], [types]);
-  const pageQuantity = useMemo(
-    () => stocks.reduce((sum, stock) => sum + (Number.isFinite(stock.quantity) ? stock.quantity : 0), 0),
-    [stocks],
-  );
+  const inventoryValue = useMemo(() => meta.inventoryValue ?? 0, [meta.inventoryValue]);
   const pageValue = useMemo(
     () => stocks.reduce((sum, stock) => sum + (stock.quantity ?? 0) * (stock.sellingPrice ?? 0), 0),
     [stocks],
@@ -271,8 +269,8 @@ export default function StocksView({ initialData, initialMeta, initialTypes }) {
           <p className="mt-2 text-2xl font-semibold text-slate-900">{totalTypes}</p>
         </div>
         <div className="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm">
-          <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Quantity (This Page)</p>
-          <p className="mt-2 text-2xl font-semibold text-slate-900">{pageQuantity}</p>
+          <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Current Stock Value</p>
+          <p className="mt-2 text-2xl font-semibold text-slate-900">{formatCurrency(inventoryValue)}</p>
         </div>
         <div className="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm">
           <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Value (This Page)</p>
@@ -410,3 +408,5 @@ export default function StocksView({ initialData, initialMeta, initialTypes }) {
     </section>
   );
 }
+
+

@@ -53,7 +53,7 @@ async function loadInitialData(searchParams) {
 
   const where = buildWhere(query, typeId);
 
-  const [totalCount, stocksRaw, typesRaw] = await Promise.all([
+  const [totalCount, stocksRaw, typesRaw, inventoryValueRows] = await Promise.all([
     prisma.medicineStock.count({ where }),
     prisma.medicineStock.findMany({
       where,
@@ -68,6 +68,7 @@ async function loadInitialData(searchParams) {
         _count: { select: { stocks: true } },
       },
     }),
+    prisma.$queryRaw`SELECT COALESCE(SUM(quantity * incomingPrice), 0) AS totalValue FROM MedicineStock`,
   ]);
 
   const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
@@ -98,6 +99,8 @@ async function loadInitialData(searchParams) {
     updatedAt: type.updatedAt?.toISOString ? type.updatedAt.toISOString() : null,
   }));
 
+  const inventoryValueRow = Array.isArray(inventoryValueRows) ? inventoryValueRows[0] : inventoryValueRows;
+  const inventoryValue = decimalToNumber(inventoryValueRow?.totalValue ?? 0) ?? 0;
   return {
     stocks,
     meta: {
@@ -107,6 +110,7 @@ async function loadInitialData(searchParams) {
       totalPages,
       query,
       typeId,
+      inventoryValue,
     },
     types,
   };
@@ -123,3 +127,5 @@ export default async function StocksPage({ searchParams }) {
     />
   );
 }
+
+

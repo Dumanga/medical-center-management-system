@@ -1,4 +1,4 @@
-# Progress Log
+﻿# Progress Log
 
 ## 2025-10-06
 - Initialized Next.js app with Tailwind CSS and ESLint configuration using create-next-app.
@@ -40,4 +40,7 @@
 - Implemented full stocks management module: Prisma models/migration, validation helpers, REST APIs, interactive admin UI with search/filtering, type management modal, and summary widgets.
 - Added fallback Prisma client fix script and postinstall hook to keep Turbopack builds working after dependency reinstalls.
 - Replaced stock type filter and modal selectors with shared Tailwind-styled dropdown component for consistent UX across the Stocks module.
+- Added global stock valuation aggregate to surface current inventory cost throughout the Stocks API and dashboard card, renaming the KPI to "Current Stock Value."
+
+
 
