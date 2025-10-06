@@ -1,0 +1,79 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Admin {
+  id        Int      @id @default(autoincrement())
+  username  String   @unique
+  password  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Patient {
+  id           Int           @id @default(autoincrement())
+  name         String
+  address      String?
+  phone        String        @unique
+  email        String?       @unique
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  appointments Appointment[]
+  sessions     Session[]
+}
+
+model Treatment {
+  id           Int               @id @default(autoincrement())
+  code         String            @unique
+  name         String
+  price        Decimal           @db.Decimal(10, 2)
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+  sessionItems SessionTreatment[]
+}
+
+model Appointment {
+  id        Int      @id @default(autoincrement())
+  patientId Int
+  date      DateTime @db.Date
+  time      DateTime @db.Time(0)
+  notes     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  patient Patient @relation(fields: [patientId], references: [id], onDelete: Cascade)
+}
+
+model Session {
+  id          Int                @id @default(autoincrement())
+  patientId   Int
+  date        DateTime           @db.Date
+  description String?            @db.Text
+  discount    Decimal?           @db.Decimal(10, 2)
+  total       Decimal            @db.Decimal(10, 2)
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+
+  patient Patient           @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  items   SessionTreatment[]
+}
+
+model SessionTreatment {
+  id           Int      @id @default(autoincrement())
+  sessionId    Int
+  treatmentId  Int
+  quantity     Int      @default(1)
+  unitPrice    Decimal  @db.Decimal(10, 2)
+  discount     Decimal? @db.Decimal(10, 2)
+  total        Decimal  @db.Decimal(10, 2)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  session   Session   @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  treatment Treatment @relation(fields: [treatmentId], references: [id], onDelete: Restrict)
+}
