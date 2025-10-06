@@ -1,4 +1,4 @@
-import { cookies } from 'next/headers';
+﻿import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import AdminSidebar from '@/components/admin-sidebar';
 import LogoutButton from '@/components/logout-button';
@@ -9,8 +9,8 @@ const NAV_ITEMS = [
   { href: '/patients', label: 'Patients', icon: 'PT' },
   { href: '/treatments', label: 'Treatments', icon: 'TR' },
   { href: '/appointments', label: 'Appointments', icon: 'AP' },
-  { href: '/sessions', label: 'Billing Sessions', icon: 'BS' },
   { href: '/stocks', label: 'Stocks', icon: 'SK' },
+  { href: '/sessions', label: 'Billing Sessions', icon: 'BS' },
   { href: '/reporting', label: 'Reporting', icon: 'RP' },
 ];
 
