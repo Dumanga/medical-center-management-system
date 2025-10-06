@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { Fragment, useCallback, useEffect, useMemo, useState } from 'react';
 import { Listbox, Transition } from '@headlessui/react';
@@ -341,7 +341,7 @@ export default function AppointmentModal({ isOpen, onClose, onSuccess, initialAp
                     placeholder="Select time"
                     startHour={8}
                     endHour={20}
-                    stepMinutes={15}
+                    stepMinutes={5}
                   />
                 </div>
               </div>
