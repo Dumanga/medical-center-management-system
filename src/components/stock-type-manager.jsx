@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useCallback, useEffect, useState } from 'react';
 
@@ -7,12 +7,20 @@ export default function StockTypeManager({ isOpen, onClose, types, onRefresh }) 
   const [errors, setErrors] = useState([]);
   const [isSubmitting, setSubmitting] = useState(false);
   const [isRefreshing, setRefreshing] = useState(false);
+  const [editingTypeId, setEditingTypeId] = useState(null);
+  const [editingName, setEditingName] = useState('');
+  const [editErrors, setEditErrors] = useState([]);
+  const [isUpdating, setUpdating] = useState(false);
 
   useEffect(() => {
     if (!isOpen) {
       setName('');
       setErrors([]);
       setSubmitting(false);
+      setEditingTypeId(null);
+      setEditingName('');
+      setEditErrors([]);
+      setUpdating(false);
     }
   }, [isOpen]);
 
@@ -56,6 +64,78 @@ export default function StockTypeManager({ isOpen, onClose, types, onRefresh }) 
       setRefreshing(false);
     }
   }, [onRefresh]);
+
+  const exitEditMode = useCallback(() => {
+    setEditingTypeId(null);
+    setEditingName('');
+    setEditErrors([]);
+    setUpdating(false);
+  }, []);
+
+  const handleEditStart = useCallback((type) => {
+    setEditingTypeId(type.id);
+    setEditingName(type.name ?? '');
+    setEditErrors([]);
+    setUpdating(false);
+  }, []);
+
+  const handleEditCancel = useCallback(() => {
+    exitEditMode();
+  }, [exitEditMode]);
+
+  const handleEditSubmit = useCallback(
+    async () => {
+      if (!editingTypeId) {
+        return;
+      }
+
+      const nextName = editingName.trim();
+      if (!nextName) {
+        setEditErrors(['Medicine type name is required.']);
+        return;
+      }
+
+      setUpdating(true);
+      setEditErrors([]);
+
+      try {
+        const response = await fetch(`/api/stock-types/${editingTypeId}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name: nextName }),
+        });
+
+        const payload = await response.json().catch(() => ({}));
+
+        if (!response.ok) {
+          const messages = payload.errors ?? (payload.message ? [payload.message] : ['Unable to update medicine type.']);
+          setEditErrors(messages);
+          return;
+        }
+
+        exitEditMode();
+        await onRefresh?.();
+      } catch (error) {
+        setEditErrors(['Unexpected error while updating medicine type.']);
+      } finally {
+        setUpdating(false);
+      }
+    },
+    [editingName, editingTypeId, exitEditMode, onRefresh],
+  );
+
+  const handleEditInputKeyDown = useCallback(
+    (event) => {
+      if (event.key === 'Enter') {
+        event.preventDefault();
+        handleEditSubmit();
+      } else if (event.key === 'Escape') {
+        event.preventDefault();
+        handleEditCancel();
+      }
+    },
+    [handleEditSubmit, handleEditCancel],
+  );
 
   if (!isOpen) {
     return null;
@@ -129,23 +209,79 @@ export default function StockTypeManager({ isOpen, onClose, types, onRefresh }) 
                   <th scope="col" className="px-4 py-3">Name</th>
                   <th scope="col" className="px-4 py-3">Stock Items</th>
                   <th scope="col" className="px-4 py-3">Created</th>
+                  <th scope="col" className="px-4 py-3">Action</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 text-sm text-slate-700">
                 {types.length === 0 ? (
                   <tr>
-                    <td colSpan={3} className="px-4 py-6 text-center text-slate-500">No medicine types yet. Add your first type above.</td>
+                    <td colSpan={4} className="px-4 py-6 text-center text-slate-500">No medicine types yet. Add your first type above.</td>
                   </tr>
                 ) : null}
-                {types.map((type) => (
-                  <tr key={type.id} className="transition hover:bg-slate-50">
-                    <td className="px-4 py-3 font-medium text-slate-900">{type.name}</td>
-                    <td className="px-4 py-3 text-slate-500">{type.stockCount ?? 0}</td>
-                    <td className="px-4 py-3 text-slate-500">
-                      {type.createdAt ? new Date(type.createdAt).toLocaleDateString() : '--'}
-                    </td>
-                  </tr>
-                ))}
+                {types.map((type) => {
+                  const isEditing = editingTypeId === type.id;
+                  return (
+                    <tr key={type.id} className="transition hover:bg-slate-50">
+                      <td className="px-4 py-3 font-medium text-slate-900">
+                        {isEditing ? (
+                          <div>
+                            <input
+                              type="text"
+                              value={editingName}
+                              onChange={(event) => setEditingName(event.target.value)}
+                              onKeyDown={handleEditInputKeyDown}
+                              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 focus:border-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-200"
+                              autoFocus
+                            />
+                            {editErrors.length > 0 ? (
+                              <ul className="mt-2 space-y-1 text-xs text-rose-600">
+                                {editErrors.map((message) => (
+                                  <li key={message}>{message}</li>
+                                ))}
+                              </ul>
+                            ) : null}
+                          </div>
+                        ) : (
+                          type.name
+                        )}
+                      </td>
+                      <td className="px-4 py-3 text-slate-500">{type.stockCount ?? 0}</td>
+                      <td className="px-4 py-3 text-slate-500">
+                        {type.createdAt ? new Date(type.createdAt).toLocaleDateString() : '--'}
+                      </td>
+                      <td className="px-4 py-3">
+                        {isEditing ? (
+                          <div className="flex items-center gap-2">
+                            <button
+                              type="button"
+                              onClick={handleEditSubmit}
+                              disabled={isUpdating}
+                              className="rounded-lg bg-sky-600 px-3 py-1.5 text-xs font-semibold text-white shadow transition hover:bg-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-300 disabled:cursor-not-allowed disabled:bg-slate-300"
+                            >
+                              {isUpdating ? 'Saving...' : 'Save'}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={handleEditCancel}
+                              disabled={isUpdating}
+                              className="rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-600 shadow-sm transition hover:border-slate-300 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-60"
+                            >
+                              Cancel
+                            </button>
+                          </div>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => handleEditStart(type)}
+                            className="rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-600 shadow-sm transition hover:border-sky-200 hover:bg-sky-50 hover:text-sky-600"
+                          >
+                            Edit
+                          </button>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
@@ -154,4 +290,3 @@ export default function StockTypeManager({ isOpen, onClose, types, onRefresh }) 
     </div>
   );
 }
-
