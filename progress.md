@@ -37,3 +37,7 @@
 - Added appointment status column with default pending state surfaced across API and admin UI.
 
 
+- Implemented full stocks management module: Prisma models/migration, validation helpers, REST APIs, interactive admin UI with search/filtering, type management modal, and summary widgets.
+- Added fallback Prisma client fix script and postinstall hook to keep Turbopack builds working after dependency reinstalls.
+- Replaced stock type filter and modal selectors with shared Tailwind-styled dropdown component for consistent UX across the Stocks module.
+

@@ -84,3 +84,26 @@ model SessionTreatment {
 
 
 
+
+model MedicineType {
+  id        Int             @id @default(autoincrement())
+  name      String          @unique
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+  stocks    MedicineStock[]
+}
+
+model MedicineStock {
+  id             Int          @id @default(autoincrement())
+  medicineTypeId Int
+  code           String       @unique
+  name           String
+  quantity       Int
+  incomingPrice  Decimal      @db.Decimal(10, 2)
+  sellingPrice   Decimal      @db.Decimal(10, 2)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  type MedicineType @relation(fields: [medicineTypeId], references: [id], onDelete: Restrict)
+}
+

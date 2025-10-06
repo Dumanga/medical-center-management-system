@@ -7,8 +7,9 @@
     "build": "next build --turbopack",
     "start": "next start",
     "lint": "eslint",
-    "prisma:generate": "prisma generate",
-    "prisma:seed": "node prisma/seed.js"
+    "prisma:generate": "prisma generate && node scripts/fix-prisma-client.js",
+    "prisma:seed": "node prisma/seed.js",
+    "postinstall": "npm run prisma:generate"
   },
   "prisma": {
     "seed": "node prisma/seed.js"
