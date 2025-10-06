@@ -31,7 +31,7 @@ async function loadPatients(searchParams) {
   const query = typeof searchParams?.query === 'string' ? searchParams.query.trim() : '';
   const where = buildWhere(query);
 
-  const [totalCount, patients] = await Promise.all([
+  const [totalCount, patientsRaw] = await Promise.all([
     prisma.patient.count({ where }),
     prisma.patient.findMany({
       where,
@@ -40,6 +40,13 @@ async function loadPatients(searchParams) {
       take: PAGE_SIZE,
     }),
   ]);
+
+  const patients = patientsRaw.map((patient) => ({
+    ...patient,
+    loyaltyPoints: typeof patient.loyaltyPoints === 'number' ? patient.loyaltyPoints : Number(patient.loyaltyPoints ?? 0),
+    createdAt: patient.createdAt?.toISOString ? patient.createdAt.toISOString() : patient.createdAt,
+    updatedAt: patient.updatedAt?.toISOString ? patient.updatedAt.toISOString() : patient.updatedAt,
+  }));
 
   const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
 

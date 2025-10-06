@@ -21,6 +21,7 @@ model Patient {
   address      String?
   phone        String        @unique
   email        String?       @unique
+  loyaltyPoints Int           @default(0)
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
   appointments Appointment[]
@@ -77,3 +78,4 @@ model SessionTreatment {
   session   Session   @relation(fields: [sessionId], references: [id], onDelete: Cascade)
   treatment Treatment @relation(fields: [treatmentId], references: [id], onDelete: Restrict)
 }
+

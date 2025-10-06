@@ -7,7 +7,7 @@ export default function AdminSidebar({ items }) {
   const pathname = usePathname();
 
   return (
-    <aside className="hidden w-64 flex-col border-r border-slate-200 bg-white/80 px-4 py-6 shadow-sm backdrop-blur lg:flex">
+    <aside className="hidden h-screen w-64 flex-col border-r border-slate-200 bg-white/80 px-4 py-6 shadow-sm backdrop-blur lg:sticky lg:top-0 lg:flex lg:overflow-y-auto">
       <div className="mb-8">
         <p className="text-sm font-semibold uppercase tracking-[0.35em] text-sky-500">Consulting Center</p>
         <h2 className="mt-2 text-xl font-semibold text-slate-900">Admin Panel</h2>

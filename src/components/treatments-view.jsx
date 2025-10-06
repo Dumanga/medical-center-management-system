@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import PatientModal from './patient-modal';
+import TreatmentModal from './treatment-modal';
 
 const DEFAULT_META = {
   page: 1,
@@ -11,26 +11,43 @@ const DEFAULT_META = {
   query: '',
 };
 
-export default function PatientsView({ initialData, initialMeta }) {
-  const [patients, setPatients] = useState(initialData ?? []);
+const CURRENCY_FORMATTER = new Intl.NumberFormat('en-LK', {
+  style: 'currency',
+  currency: 'LKR',
+  minimumFractionDigits: 2,
+});
+
+function formatPrice(value) {
+  if (value === null || value === undefined) {
+    return CURRENCY_FORMATTER.format(0);
+  }
+  const numeric = typeof value === 'number' ? value : Number.parseFloat(value);
+  if (!Number.isFinite(numeric)) {
+    return CURRENCY_FORMATTER.format(0);
+  }
+  return CURRENCY_FORMATTER.format(numeric);
+}
+
+export default function TreatmentsView({ initialData, initialMeta }) {
+  const [treatments, setTreatments] = useState(initialData ?? []);
   const [meta, setMeta] = useState({ ...DEFAULT_META, ...(initialMeta ?? {}) });
   const [searchTerm, setSearchTerm] = useState(initialMeta?.query ?? '');
   const [isLoading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [isModalOpen, setModalOpen] = useState(false);
-  const [editingPatient, setEditingPatient] = useState(null);
+  const [editingTreatment, setEditingTreatment] = useState(null);
 
   const searchDebounceRef = useRef();
   const hasMountedRef = useRef(false);
-  const fetchPatientsRef = useRef();
+  const fetchTreatmentsRef = useRef();
 
   useEffect(() => {
-    setPatients(initialData ?? []);
+    setTreatments(initialData ?? []);
     setMeta({ ...DEFAULT_META, ...(initialMeta ?? {}) });
     setSearchTerm(initialMeta?.query ?? '');
   }, [initialData, initialMeta]);
 
-  const fetchPatients = useCallback(
+  const fetchTreatments = useCallback(
     async ({ page, query } = {}) => {
       setLoading(true);
       setError('');
@@ -47,7 +64,7 @@ export default function PatientsView({ initialData, initialMeta }) {
           params.set('query', nextQuery);
         }
 
-        const response = await fetch(`/api/patients?${params.toString()}`, {
+        const response = await fetch(`/api/treatments?${params.toString()}`, {
           method: 'GET',
           headers: { 'Content-Type': 'application/json' },
           cache: 'no-store',
@@ -55,14 +72,14 @@ export default function PatientsView({ initialData, initialMeta }) {
 
         if (!response.ok) {
           const payload = await response.json().catch(() => ({}));
-          throw new Error(payload.message || 'Unable to load patients.');
+          throw new Error(payload.message || 'Unable to load treatments.');
         }
 
         const payload = await response.json();
-        setPatients(payload.data ?? []);
+        setTreatments(payload.data ?? []);
         setMeta({ ...DEFAULT_META, ...(payload.meta ?? {}) });
       } catch (requestError) {
-        setError(requestError.message ?? 'Unable to load patients.');
+        setError(requestError.message ?? 'Unable to load treatments.');
       } finally {
         setLoading(false);
       }
@@ -71,8 +88,8 @@ export default function PatientsView({ initialData, initialMeta }) {
   );
 
   useEffect(() => {
-    fetchPatientsRef.current = fetchPatients;
-  }, [fetchPatients]);
+    fetchTreatmentsRef.current = fetchTreatments;
+  }, [fetchTreatments]);
 
   useEffect(() => {
     if (!hasMountedRef.current) {
@@ -85,7 +102,7 @@ export default function PatientsView({ initialData, initialMeta }) {
     }
 
     searchDebounceRef.current = setTimeout(() => {
-      fetchPatientsRef.current?.({ page: 1, query: searchTerm.trim() });
+      fetchTreatmentsRef.current?.({ page: 1, query: searchTerm.trim() });
     }, 400);
 
     return () => {
@@ -96,18 +113,18 @@ export default function PatientsView({ initialData, initialMeta }) {
   }, [searchTerm]);
 
   const handleOpenCreateModal = useCallback(() => {
-    setEditingPatient(null);
+    setEditingTreatment(null);
     setModalOpen(true);
   }, []);
 
-  const handleOpenEditModal = useCallback((patient) => {
-    setEditingPatient(patient);
+  const handleOpenEditModal = useCallback((treatment) => {
+    setEditingTreatment(treatment);
     setModalOpen(true);
   }, []);
 
   const handleModalClose = useCallback(() => {
     setModalOpen(false);
-    setEditingPatient(null);
+    setEditingTreatment(null);
   }, []);
 
   const handleModalSuccess = useCallback(
@@ -115,7 +132,7 @@ export default function PatientsView({ initialData, initialMeta }) {
       handleModalClose();
       const nextQuery = searchTerm.trim();
       const nextPage = mode === 'update' ? meta.page : 1;
-      await fetchPatientsRef.current?.({ page: nextPage, query: nextQuery });
+      await fetchTreatmentsRef.current?.({ page: nextPage, query: nextQuery });
     },
     [handleModalClose, meta.page, searchTerm],
   );
@@ -123,14 +140,14 @@ export default function PatientsView({ initialData, initialMeta }) {
   const handleSearchSubmit = useCallback(
     async (event) => {
       event.preventDefault();
-      await fetchPatientsRef.current?.({ page: 1, query: searchTerm.trim() });
+      await fetchTreatmentsRef.current?.({ page: 1, query: searchTerm.trim() });
     },
     [searchTerm],
   );
 
   const handlePageChange = useCallback(
     async (nextPage) => {
-      await fetchPatientsRef.current?.({ page: nextPage, query: searchTerm.trim() });
+      await fetchTreatmentsRef.current?.({ page: nextPage, query: searchTerm.trim() });
     },
     [searchTerm],
   );
@@ -142,15 +159,15 @@ export default function PatientsView({ initialData, initialMeta }) {
     <section className="space-y-6">
       <header className="flex flex-col gap-4 rounded-2xl border border-slate-100 bg-white p-6 shadow-sm sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-semibold text-slate-900">Patients</h1>
-          <p className="mt-1 text-sm text-slate-600">Manage patient records, contact information, and quick onboarding.</p>
+          <h1 className="text-2xl font-semibold text-slate-900">Treatments</h1>
+          <p className="mt-1 text-sm text-slate-600">Maintain an up-to-date catalog of treatments and pricing.</p>
         </div>
         <button
           type="button"
           onClick={handleOpenCreateModal}
           className="inline-flex items-center justify-center rounded-lg bg-sky-600 px-4 py-2 text-sm font-semibold text-white shadow transition hover:bg-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-300"
         >
-          + Add Patient
+          + Add Treatment
         </button>
       </header>
 
@@ -161,7 +178,7 @@ export default function PatientsView({ initialData, initialMeta }) {
               type="text"
               value={searchTerm}
               onChange={(event) => setSearchTerm(event.target.value)}
-              placeholder="Search patients by name, phone, or email"
+              placeholder="Search treatments by code or name"
               className="w-full rounded-lg border border-slate-200 px-4 py-2 text-sm text-slate-900 shadow-sm focus:border-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-200"
             />
             <button
@@ -172,7 +189,7 @@ export default function PatientsView({ initialData, initialMeta }) {
             </button>
           </form>
           <div className="text-sm text-slate-500">
-            Total patients: <span className="font-semibold text-slate-700">{meta.totalCount}</span>
+            Total treatments: <span className="font-semibold text-slate-700">{meta.totalCount}</span>
           </div>
         </div>
 
@@ -184,35 +201,29 @@ export default function PatientsView({ initialData, initialMeta }) {
           <table className="min-w-full divide-y divide-slate-200 text-left">
             <thead className="bg-slate-50 text-xs font-semibold uppercase tracking-wide text-slate-500">
               <tr>
-                <th scope="col" className="px-4 py-3">ID</th>
+                <th scope="col" className="px-4 py-3">Code</th>
                 <th scope="col" className="px-4 py-3">Name</th>
-                <th scope="col" className="px-4 py-3">Phone</th>
-                <th scope="col" className="px-4 py-3">Loyalty Points</th>
-                <th scope="col" className="px-4 py-3">Email</th>
-                <th scope="col" className="px-4 py-3">Address</th>
+                <th scope="col" className="px-4 py-3">Price</th>
                 <th scope="col" className="px-4 py-3">Action</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 text-sm text-slate-700">
-              {patients.length === 0 && !isLoading ? (
+              {treatments.length === 0 && !isLoading ? (
                 <tr>
-                  <td colSpan={7} className="px-4 py-6 text-center text-slate-500">
-                    No patients found. Add a new patient to get started.
+                  <td colSpan={4} className="px-4 py-6 text-center text-slate-500">
+                    No treatments found. Add a treatment to populate the catalog.
                   </td>
                 </tr>
               ) : null}
-              {patients.map((patient) => (
-                <tr key={patient.id} className="transition hover:bg-slate-50">
-                  <td className="px-4 py-3 font-mono text-xs text-slate-500">#{patient.id}</td>
-                  <td className="px-4 py-3 font-medium text-slate-900">{patient.name}</td>
-                  <td className="px-4 py-3">{patient.phone}</td>
-                  <td className="px-4 py-3 text-slate-500">{patient.loyaltyPoints ?? 0}</td>
-                  <td className="px-4 py-3 text-slate-500">{patient.email ?? '--'}</td>
-                  <td className="px-4 py-3 text-slate-500">{patient.address ?? '--'}</td>
+              {treatments.map((treatment) => (
+                <tr key={treatment.id} className="transition hover:bg-slate-50">
+                  <td className="px-4 py-3 font-mono text-xs text-slate-500">{treatment.code}</td>
+                  <td className="px-4 py-3 font-medium text-slate-900">{treatment.name}</td>
+                  <td className="px-4 py-3 text-slate-700">{formatPrice(treatment.price)}</td>
                   <td className="px-4 py-3">
                     <button
                       type="button"
-                      onClick={() => handleOpenEditModal(patient)}
+                      onClick={() => handleOpenEditModal(treatment)}
                       className="rounded-lg border border-slate-200 px-3 py-1 text-xs font-semibold text-slate-600 shadow-sm transition hover:border-sky-200 hover:bg-sky-50 hover:text-sky-600"
                     >
                       Edit
@@ -225,7 +236,7 @@ export default function PatientsView({ initialData, initialMeta }) {
         </div>
 
         {isLoading ? (
-          <p className="mt-4 text-sm text-slate-500">Loading patients...</p>
+          <p className="mt-4 text-sm text-slate-500">Loading treatments...</p>
         ) : null}
 
         <div className="mt-6 flex flex-col items-center gap-3 sm:flex-row sm:justify-between">
@@ -254,12 +265,13 @@ export default function PatientsView({ initialData, initialMeta }) {
         </div>
       </div>
 
-      <PatientModal
+      <TreatmentModal
         isOpen={isModalOpen}
         onClose={handleModalClose}
         onSuccess={handleModalSuccess}
-        initialPatient={editingPatient}
+        initialTreatment={editingTreatment}
       />
     </section>
   );
 }
+

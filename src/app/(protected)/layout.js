@@ -27,10 +27,10 @@ export default async function ProtectedLayout({ children }) {
   }
 
   return (
-    <div className="flex min-h-screen bg-slate-100">
+    <div className="flex h-screen bg-slate-100 overflow-hidden">
       <AdminSidebar items={NAV_ITEMS} />
-      <div className="flex flex-1 flex-col">
-        <header className="flex items-center justify-between border-b border-slate-200 bg-white/70 px-6 py-4 backdrop-blur">
+      <div className="flex flex-1 flex-col overflow-hidden">
+        <header className="sticky top-0 z-20 flex items-center justify-between border-b border-slate-200 bg-white/80 px-6 py-4 backdrop-blur">
           <div>
             <p className="text-sm text-slate-500">Welcome back,</p>
             <p className="text-base font-semibold text-slate-900">{session.username}</p>

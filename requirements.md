@@ -1,23 +1,26 @@
 # 🏥 Medical Center Management System – Requirements Document
 
 ## 1. Project Overview
-The **Consulting Center Management System** is a web application for a **private consulting center run by a doctor**.  
-It manages patients, appointments, treatments, sessions (invoicing), and reporting — all accessible through a secure **admin panel**.  
 
-The system has only **one admin user** who can log in to manage all operations.  
+The **Consulting Center Management System** is a web application for a **private consulting center run by a doctor**.  
+It manages patients, appointments, treatments, sessions (invoicing), and reporting — all accessible through a secure **admin panel**.
+
+The system has only **one admin user** who can log in to manage all operations.
 
 ---
 
 ## 2. Technology Stack
+
 - **Framework:** Next.js (JavaScript, not TypeScript)
-- **Styling:** Tailwind CSS  
-- **Database:** MySQL  
-- **ORM:** Prisma  
+- **Styling:** Tailwind CSS
+- **Database:** MySQL
+- **ORM:** Prisma
 - **PDF Generation:** For invoices and reports (attractive and professional layout)
 
 ---
 
 ## 3. Design & Theme
+
 - Overall design: **Modern**, **stylish**, **light-themed**, and **simple yet attractive**
 - Fully **responsive** design for desktop and mobile
 - **Clean layout** with consistent spacing, rounded corners, and smooth UI animations
@@ -25,7 +28,9 @@ The system has only **one admin user** who can log in to manage all operations.
 ---
 
 ## 4. Authentication & Access
+
 - **Single Admin User**
+
   - Admin logs in using credentials (username & password)
   - Accesses all modules from the admin panel after successful login
   - Can log out anytime from the dashboard
@@ -37,19 +42,23 @@ The system has only **one admin user** who can log in to manage all operations.
 ---
 
 ## 5. Admin Panel Structure
+
 The admin panel contains the following main sections:
 
-1. Dashboard  
-2. Patients  
-3. Treatments  
-4. Appointments  
-5. Create Session (Billing & Invoicing)  
-6. Reporting  
+1. Dashboard
+2. Patients
+3. Treatments
+4. Appointments
+5. Create Session (Billing & Invoicing)
+6. Stocks
+7. Reporting
 
 ---
 
 ## 6. Dashboard
+
 ### Overview:
+
 - Displays key summaries and insights:
   - Total number of patients
   - Total number of treatments
@@ -59,6 +68,7 @@ The admin panel contains the following main sections:
 - **Today’s appointments** are highlighted for quick access
 
 ### Design:
+
 - Light-themed, clean, and minimal
 - Uses cards and charts for summaries
 - Responsive grid layout
@@ -68,23 +78,27 @@ The admin panel contains the following main sections:
 ## 7. Patients Section
 
 ### Features:
+
 - **Paginated table** displaying all patients
   - Columns: ID, Name, Address, Phone Number, Email
 - **Create New Patient** button
   - Opens a **popup modal** for entering new patient details
 
 ### Popup Form Fields:
+
 - **Name** (Required)
 - **Address** (Optional)
 - **Phone Number** (Required, numeric validation)
 - **Email** (Optional, must be a valid email format)
 
 ### Validations:
+
 - Name and phone number cannot be empty
 - Phone number must be numeric and within a valid length (e.g.071/072, 10 digit max sri lankan valid phone number)
 - Email must follow proper email format
 
 ### Design:
+
 - Modern, simple, and attractive popup
 - Smooth opening/closing animations
 - Consistent UI styling with Tailwind
@@ -94,20 +108,24 @@ The admin panel contains the following main sections:
 ## 8. Treatments Section
 
 ### Features:
+
 - **List of all treatments** with treatment code, name, and price (in LKR)
 - **Create Treatment** button
   - Opens a **popup modal** to add new treatment details
 
 ### Popup Form Fields:
+
 - **Treatment Code** (Required, must be unique)
 - **Treatment Name** (Required)
 - **Price (LKR)** (Required, numeric validation)
 
 ### Validations:
+
 - Code, name, and price are mandatory
 - Price must be numeric (no negative values)
 
 ### Design:
+
 - Clean and modern interface
 - Easy to view and update treatment information
 
@@ -116,13 +134,15 @@ The admin panel contains the following main sections:
 ## 9. Appointments Section
 
 ### Features:
-- **Dashboard Integration:** Displays today’s appointments  
+
+- **Dashboard Integration:** Displays today’s appointments
 - **Create Appointment** button to open the appointment form
 - **Appointment List** view:
   - Sortable by date
   - Columns: Appointment ID, Patient Name, Date, Time
 
 ### Appointment Creation Form:
+
 - **Date** (Required; default = today’s date)
 - **Time** (Required)
 - **Patient** dropdown:
@@ -130,11 +150,13 @@ The admin panel contains the following main sections:
   - If patient not found, open a **popup** to create a new patient directly
 
 ### Validations:
+
 - All fields required (date, time, patient)
 - Date cannot be in the past
 - Time must follow HH:MM format
 
 ### Design:
+
 - Clean appointment cards or table view
 - “Create Appointment” modal follows same design as patient/treatment forms
 
@@ -143,9 +165,9 @@ The admin panel contains the following main sections:
 ## 10. Create Session (Billing & Invoicing)
 
 ### Features:
+
 - **Date Field:** Auto-selected as today’s date (editable if needed)
-- **Select Patient:** Dropdown list of patients  
-  - Option to add a new patient within a popup (if not found)
+- When selecting an **existing appointment**, the **customer/patient is auto-selected** based on the appointment details.
 - **Select Treatments:** Dropdown to select one or more treatments
   - Selected treatments are added to a **session table**
 - **Adjust Price:** Treatment price can be edited for this specific session only (does not affect the main treatment price)
@@ -154,6 +176,7 @@ The admin panel contains the following main sections:
 - **Create Bill:** Generates a **professional, well-designed PDF invoice**
 
 ### Session Table Columns:
+
 - Treatment Name
 - Quantity (optional, defaults to 1)
 - Unit Price
@@ -162,6 +185,7 @@ The admin panel contains the following main sections:
 - Session Total
 
 ### PDF Invoice Requirements:
+
 - Attractive and professional layout
 - Includes:
   - Clinic Name and Logo
@@ -172,6 +196,7 @@ The admin panel contains the following main sections:
 - Printable PDF format
 
 ### Validations:
+
 - Patient selection required
 - At least one treatment must be added
 - Prices and discounts must be valid numbers
@@ -181,6 +206,7 @@ The admin panel contains the following main sections:
 ## 11. Reporting Section
 
 ### Features:
+
 - Generate reports by selecting a **Start Date** and **End Date**
 - **View Report** button generates a **table of sessions** within that period
 - **Columns in Report Table:**
@@ -194,30 +220,96 @@ The admin panel contains the following main sections:
   - Suitable for printing and record-keeping
 
 ### Validations:
+
 - Start date and end date required
 - End date must not be before start date
 
 ### Design:
+
 - Simple, elegant, and clear table layout
 - Buttons styled with Tailwind for consistency
 
 ---
 
-## 12. Database Structure (Main Entities)
+## 12. Stocks Section
 
-| Table | Fields | Description |
-|-------|---------|-------------|
-| **Admin** | id, username, password | Single admin login |
-| **Patients** | id, name, address, phone, email | Patient details |
-| **Treatments** | id, code, name, price | Treatment data |
-| **Appointments** | id, patient_id, date, time | Appointment schedule |
-| **Sessions** | id, patient_id, date, description, discount, total | Billing sessions |
-| **Session_Treatments** | id, session_id, treatment_id, adjusted_price | Treatments per session |
-| **Reports (generated dynamically)** | — | Based on session data |
+### Overview:
+
+The **Stocks** section manages the **medicine inventory** of the consulting center.  
+Admin can view, add, and categorize different medicine types, as well as track available quantities, prices, and stock details.
+
+---
+
+### Features:
+
+- **Stock Overview Table:**
+
+  - Displays all current medicines with the following columns:
+    - Medicine Code
+    - Medicine Name
+    - Medicine Type
+    - Quantity Available
+    - Incoming Price (per unit)
+    - Selling Price (per unit)
+
+- **Manage Medicine Types Button:**
+
+  - Located above the stock table.
+  - Opens a **popup modal** showing all existing medicine types in a **table view** (e.g., Tablets, Syrup, Capsules).
+  - Above the table, there is an **“Add Medicine Type”** button.
+    - Clicking this opens a small **popup form** to create a new medicine type.
+    - Fields: `Medicine Type Name`
+    - Includes “Add” and “Close” actions.
+
+- **Add Stock Button:**
+
+  - Opens a popup to add a new stock record.
+  - **Fields:**
+    - **Medicine Type** (Dropdown – from existing types)
+    - **Medicine Code** (Required, unique)
+    - **Medicine Name** (Required)
+    - **Quantity** (Required, numeric)
+    - **Incoming Price (per unit)** (Required, numeric)
+    - **Selling Price (per unit)** (Required, numeric)
+
+- **Example:**
+  > If 40 units of a medicine are received, you will enter quantity = 40, and specify the **incoming price per unit** and **selling price per unit** individually.
+
+### Design:
+
+- Clean and consistent with other sections.
+- Popup modals styled using Tailwind CSS with smooth transitions.
+
+### Validations:
+
+- All fields required except optional description if added later.
+- Prices and quantity must be numeric values greater than 0.
+
+---
+
+### ⚙️ Integration Notes:
+
+- This section works as a standalone stock management module.
+- Medicine types must exist before adding a stock entry.
+
+---
+
+## 13. Database Structure (Main Entities)
+
+| Table                               | Fields                                             | Description            |
+| ----------------------------------- | -------------------------------------------------- | ---------------------- |
+| **Admin**                           | id, username, password                             | Single admin login     |
+| **Patients**                        | id, name, address, phone, email                    | Patient details        |
+| **Treatments**                      | id, code, name, price                              | Treatment data         |
+| **Appointments**                    | id, patient_id, date, time                         | Appointment schedule   |
+| **Sessions**                        | id, patient_id, date, description, discount, total | Billing sessions       |
+| **Session_Treatments**              | id, session_id, treatment_id, adjusted_price       | Treatments per session |
+| **Reports (generated dynamically)** | —                                                  | Based on session data  |
 
 ---
 
 ## 13. PDF Design Standards
+
 - Use clinic name and branding at the top
 - Professional typography (clear headings, readable body text)
 - Table layout for data clarity
@@ -227,6 +319,7 @@ The admin panel contains the following main sections:
 ---
 
 ## 14. Future Enhancements (Now not on our task list this is optional)
+
 - Add SMS/email notifications for appointments
 - Multi-user access (doctor + receptionist)
 - Chart-based analytics in Dashboard
@@ -235,7 +328,9 @@ The admin panel contains the following main sections:
 ---
 
 ## 15. Summary
+
 This system provides:
+
 - A **fully manageable consulting center system**
 - A **single, secure admin panel**
 - Modern UI with **Tailwind CSS**
@@ -248,10 +343,7 @@ This system provides:
 
 The following database credentials should be used for the setup:
 
-- **Username:** root  
-- **Password:** Ravindra#7808  
-- **Host:** localhost  
-- **Port:** 3306  
-  
-
-
+- **Username:** root
+- **Password:** Ravindra#7808
+- **Host:** localhost
+- **Port:** 3306

@@ -10,3 +10,10 @@
 - Implemented patient management module: Prisma-backed API with pagination/search, interactive dashboard table, and modal workflow for adding new patients.
 - Enhanced patients module with live search, edit support via reusable modal, and backend update endpoint shared with validation utilities.
 - Fixed patient search API error by removing unsupported Prisma case-insensitive modifiers, aligned UI fetcher with backend, and reran lint to validate.
+- Implemented treatments module with Prisma-backed API, validation, searchable listing UI, and create/update modal workflow.
+- Added patient loyalty tracking with Prisma schema update, migration, and patients table display.
+
+  
+- Restructured protected layout for sticky sidebar/header and applied migration for loyalty tracking.
+
+

@@ -1,0 +1,1 @@
+ALTER TABLE `Patient` ADD COLUMN `loyaltyPoints` INT NOT NULL DEFAULT 0;
