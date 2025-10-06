@@ -24,6 +24,30 @@ function formatPatientDisplay(patient) {
   return patient.name;
 }
 
+function normalizeStatus(value) {
+  return (value ?? 'PENDING').toUpperCase();
+}
+
+function getStatusClasses(status) {
+  const normalized = normalizeStatus(status);
+  switch (normalized) {
+    case 'CONFIRMED':
+      return 'bg-emerald-100 text-emerald-700';
+    case 'CANCELLED':
+      return 'bg-rose-100 text-rose-700';
+    case 'COMPLETED':
+      return 'bg-blue-100 text-blue-700';
+    default:
+      return 'bg-amber-100 text-amber-700';
+  }
+}
+
+function formatStatusLabel(status) {
+  const normalized = normalizeStatus(status);
+  return normalized.replace(/_/g, ' ').toLowerCase().split(' ').map((word) => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+}
+
+
 export default function AppointmentsView({ initialData, initialMeta }) {
   const [appointments, setAppointments] = useState(initialData ?? []);
   const [meta, setMeta] = useState({ ...DEFAULT_META, ...(initialMeta ?? {}) });
@@ -301,6 +325,7 @@ export default function AppointmentsView({ initialData, initialMeta }) {
                 <th scope="col" className="px-4 py-3">Patient</th>
                 <th scope="col" className="px-4 py-3">Date</th>
                 <th scope="col" className="px-4 py-3">Time</th>
+                <th scope="col" className="px-4 py-3">Status</th>
                 <th scope="col" className="px-4 py-3">Notes</th>
                 <th scope="col" className="px-4 py-3">Actions</th>
               </tr>
@@ -308,7 +333,7 @@ export default function AppointmentsView({ initialData, initialMeta }) {
             <tbody className="divide-y divide-slate-100 text-sm text-slate-700">
               {appointments.length === 0 && !isLoading ? (
                 <tr>
-                  <td colSpan={6} className="px-4 py-6 text-center text-slate-500">
+                  <td colSpan={7} className="px-4 py-6 text-center text-slate-500">
                     No appointments found. Create a new appointment to get started.
                   </td>
                 </tr>
@@ -323,6 +348,11 @@ export default function AppointmentsView({ initialData, initialMeta }) {
                     </span>
                   </td>
                   <td className="px-4 py-3 text-slate-700">{appointment.time}</td>
+                  <td className="px-4 py-3">
+                    <span className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${getStatusClasses(appointment.status)}`}>
+                      {formatStatusLabel(appointment.status)}
+                    </span>
+                  </td>
                   <td className="px-4 py-3 text-slate-500">
                     {appointment.notes ? (
                       <span className="line-clamp-2">{appointment.notes}</span>
@@ -394,6 +424,9 @@ export default function AppointmentsView({ initialData, initialMeta }) {
     </section>
   );
 }
+
+
+
 
 
 

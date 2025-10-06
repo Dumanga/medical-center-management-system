@@ -34,3 +34,6 @@
 - Enabled live search for appointments list with debounced API fetches to match patient/treatment UX.
 
 
+- Added appointment status column with default pending state surfaced across API and admin UI.
+
+

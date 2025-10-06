@@ -23,6 +23,7 @@ export function serializeAppointmentRecord(appointment) {
       : null,
     date: formatAppointmentDate(appointment.date),
     time: formatAppointmentTime(appointment.time),
+    status: appointment.status ?? 'PENDING',
     notes: appointment.notes ?? null,
     createdAt: appointment.createdAt?.toISOString ? appointment.createdAt.toISOString() : null,
     updatedAt: appointment.updatedAt?.toISOString ? appointment.updatedAt.toISOString() : null,
