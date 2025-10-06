@@ -10,6 +10,7 @@ const NAV_ITEMS = [
   { href: '/treatments', label: 'Treatments', icon: 'TR' },
   { href: '/appointments', label: 'Appointments', icon: 'AP' },
   { href: '/sessions', label: 'Billing Sessions', icon: 'BS' },
+  { href: '/stocks', label: 'Stocks', icon: 'SK' },
   { href: '/reporting', label: 'Reporting', icon: 'RP' },
 ];
 
@@ -49,3 +50,5 @@ export default async function ProtectedLayout({ children }) {
     </div>
   );
 }
+
+

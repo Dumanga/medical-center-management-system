@@ -20,3 +20,7 @@
 - Simplified patient and treatment modals by removing duplicate close controls.
 
 
+## 2025-10-07
+- Added Stocks navigation link and created placeholder page outlining future inventory functionality to avoid empty route.
+
+
