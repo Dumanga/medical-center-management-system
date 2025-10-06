@@ -31,3 +31,6 @@
 - Replaced native date/time controls with Tailwind-styled pickers and Headless UI dropdowns for consistent appointments UX across modal and table filters.
 
 
+- Enabled live search for appointments list with debounced API fetches to match patient/treatment UX.
+
+

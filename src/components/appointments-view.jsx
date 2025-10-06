@@ -1,6 +1,6 @@
 ﻿'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import AppointmentModal from './appointment-modal';
 import DatePicker from '@/components/ui/date-picker';
 
@@ -35,6 +35,10 @@ export default function AppointmentsView({ initialData, initialMeta }) {
   const [isModalOpen, setModalOpen] = useState(false);
   const [editingAppointment, setEditingAppointment] = useState(null);
   const [deletingId, setDeletingId] = useState(null);
+
+  const searchDebounceRef = useRef();
+  const hasMountedRef = useRef(false);
+  const fetchAppointmentsRef = useRef(null);
 
   useEffect(() => {
     setAppointments(initialData ?? []);
@@ -91,6 +95,31 @@ export default function AppointmentsView({ initialData, initialMeta }) {
     },
     [fromDate, meta.page, meta.pageSize, searchTerm, toDate],
   );
+
+  useEffect(() => {
+    fetchAppointmentsRef.current = fetchAppointments;
+  }, [fetchAppointments]);
+
+  useEffect(() => {
+    if (!hasMountedRef.current) {
+      hasMountedRef.current = true;
+      return;
+    }
+
+    if (searchDebounceRef.current) {
+      clearTimeout(searchDebounceRef.current);
+    }
+
+    searchDebounceRef.current = setTimeout(() => {
+      fetchAppointmentsRef.current?.({ page: 1, query: searchTerm.trim() });
+    }, 400);
+
+    return () => {
+      if (searchDebounceRef.current) {
+        clearTimeout(searchDebounceRef.current);
+      }
+    };
+  }, [searchTerm]);
 
   const handleOpenCreateModal = useCallback(() => {
     setEditingAppointment(null);
@@ -365,6 +394,7 @@ export default function AppointmentsView({ initialData, initialMeta }) {
     </section>
   );
 }
+
 
 
 
