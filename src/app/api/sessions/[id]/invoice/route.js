@@ -73,7 +73,7 @@ function buildInvoiceHtml(session) {
   const createdDate = session.createdAt ? new Date(session.createdAt).toLocaleString() : 'N/A';
 
   const baseURL = process.env.NEXT_PUBLIC_BASE_URL || '';
-  const logoSrc = `${baseURL}/invoice-logo.svg`;
+  const logoSrc = `${baseURL}/invoice-logo.png`;
 
   const head = `<!DOCTYPE html>
 <html lang="en">
