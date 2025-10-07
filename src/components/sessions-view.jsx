@@ -377,6 +377,8 @@ export default function SessionsView({
       mode="create"
       patients={currentPatients}
       treatments={treatments}
+      medicines={currentMedicines}
+      medicineTypes={currentMedicineTypes}
       appointments={currentAppointments}
       onCancel={handleCancelEditor}
       onSuccess={handleCreateSuccess}
@@ -389,6 +391,8 @@ export default function SessionsView({
       session={activeSession}
       patients={currentPatients}
       treatments={treatments}
+      medicines={currentMedicines}
+      medicineTypes={currentMedicineTypes}
       appointments={currentAppointments}
       onCancel={handleCancelEditor}
     />
