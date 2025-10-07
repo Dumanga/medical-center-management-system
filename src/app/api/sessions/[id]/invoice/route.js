@@ -1,8 +1,33 @@
 import { NextResponse } from 'next/server';
 import { chromium } from 'playwright';
+import fs from 'fs';
+import path from 'path';
 import prisma from '@/lib/prisma';
 
 export const runtime = 'nodejs';
+
+const LOGO_PATH = path.join(process.cwd(), 'public', 'invoice-logo.png');
+let cachedLogoDataUrl = null;
+
+function getLogoDataUrl() {
+  if (cachedLogoDataUrl) {
+    return cachedLogoDataUrl;
+  }
+
+  try {
+    const file = fs.readFileSync(LOGO_PATH);
+    cachedLogoDataUrl = `data:image/png;base64,${file.toString('base64')}`;
+    return cachedLogoDataUrl;
+  } catch (error) {
+    console.warn('Invoice logo not found at public/invoice-logo.png. Using fallback.', error?.message ?? error);
+    cachedLogoDataUrl =
+      'data:image/svg+xml;utf8,' +
+      encodeURIComponent(
+        `<svg xmlns="http://www.w3.org/2000/svg" width="120" height="120" viewBox="0 0 120 120"><circle cx="60" cy="60" r="55" fill="#2563eb" opacity="0.2"/><circle cx="60" cy="60" r="40" fill="#2563eb" opacity="0.3"/><circle cx="60" cy="60" r="26" fill="#2563eb"/></svg>`,
+      );
+    return cachedLogoDataUrl;
+  }
+}
 
 function parseId(value) {
   const parsed = Number.parseInt(`${value ?? ''}`, 10);
@@ -72,8 +97,7 @@ function buildInvoiceHtml(session) {
   const formattedDate = session.date ? new Date(session.date).toLocaleDateString() : 'N/A';
   const createdDate = session.createdAt ? new Date(session.createdAt).toLocaleString() : 'N/A';
 
-  const baseURL = process.env.NEXT_PUBLIC_BASE_URL || '';
-  const logoSrc = `${baseURL}/invoice-logo.png`;
+  const logoSrc = getLogoDataUrl();
 
   const head = `<!DOCTYPE html>
 <html lang="en">
