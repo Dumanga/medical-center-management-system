@@ -7,6 +7,7 @@ function parseId(value) {
   return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
 }
 
+
 function decimalToNumber(value) {
   if (value === null || value === undefined) {
     return 0;
@@ -66,50 +67,70 @@ async function buildInvoiceBuffer(session) {
     }
 
     doc.moveDown(1);
-    doc.fontSize(12).font('Helvetica-Bold').fillColor('#0f172a').text('Treatments');
-    doc.moveDown(0.5);
+    const renderLineItemsTable = (title, rows, labelAccessor) => {
+      if (!rows.length) {
+        return;
+      }
 
-    const tableTop = doc.y;
-    const columnX = {
-      treatment: 50,
-      qty: 260,
-      unit: 320,
-      discount: 400,
-      total: 480,
+      doc.fontSize(12).font('Helvetica-Bold').fillColor('#0f172a').text(title);
+      doc.moveDown(0.5);
+
+      const tableTop = doc.y;
+      const columnX = {
+        label: 50,
+        qty: 260,
+        unit: 320,
+        discount: 400,
+        total: 480,
+      };
+
+      doc.fontSize(10).font('Helvetica-Bold').fillColor('#0f172a');
+      doc.text('Item', columnX.label, tableTop);
+      doc.text('Qty', columnX.qty, tableTop);
+      doc.text('Unit Price', columnX.unit, tableTop, { width: 60, align: 'right' });
+      doc.text('Discount', columnX.discount, tableTop, { width: 60, align: 'right' });
+      doc.text('Total', columnX.total, tableTop, { width: 60, align: 'right' });
+
+      doc.moveTo(50, doc.y + 4).lineTo(545, doc.y + 4).strokeColor('#cbd5f5').lineWidth(1).stroke();
+
+      doc.font('Helvetica').fillColor('#1e293b');
+
+      rows.forEach((row, index) => {
+        const rowY = doc.y + 6;
+        doc.text(labelAccessor(row), columnX.label, rowY, { width: 200 });
+        doc.text(`${row.quantity}`, columnX.qty, rowY);
+        doc.text(formatCurrency.format(row.unitPrice ?? 0), columnX.unit, rowY, { width: 60, align: 'right' });
+        doc.text(formatCurrency.format(row.discount ?? 0), columnX.discount, rowY, { width: 60, align: 'right' });
+        doc.text(formatCurrency.format(row.total ?? 0), columnX.total, rowY, { width: 60, align: 'right' });
+
+        doc.moveDown(0.8);
+        if (index < rows.length - 1) {
+          doc.moveTo(50, doc.y).lineTo(545, doc.y).strokeColor('#e2e8f0').lineWidth(0.5).stroke();
+        }
+      });
+
+      doc.moveDown(1.2);
     };
 
-    doc.fontSize(10).font('Helvetica-Bold').fillColor('#0f172a');
-    doc.text('Treatment', columnX.treatment, tableTop);
-    doc.text('Qty', columnX.qty, tableTop);
-    doc.text('Unit Price', columnX.unit, tableTop, { width: 60, align: 'right' });
-    doc.text('Discount', columnX.discount, tableTop, { width: 60, align: 'right' });
-    doc.text('Total', columnX.total, tableTop, { width: 60, align: 'right' });
+    renderLineItemsTable('Treatments', session.items, (row) => row.treatment?.name ?? 'Treatment');
+    renderLineItemsTable('Medicines', session.medicineItems ?? [], (row) => row.medicine?.name ?? 'Medicine');
 
-    doc.moveTo(50, doc.y + 4).lineTo(545, doc.y + 4).strokeColor('#cbd5f5').lineWidth(1).stroke();
-
-    doc.font('Helvetica').fillColor('#1e293b');
-
-    session.items.forEach((item, index) => {
-      const rowY = doc.y + 6;
-      doc.text(item.treatment?.name ?? 'Treatment', columnX.treatment, rowY, { width: 200 });
-      doc.text(`${item.quantity}`, columnX.qty, rowY);
-      doc.text(formatCurrency.format(item.unitPrice ?? 0), columnX.unit, rowY, { width: 60, align: 'right' });
-      doc.text(formatCurrency.format(item.discount ?? 0), columnX.discount, rowY, { width: 60, align: 'right' });
-      doc.text(formatCurrency.format(item.total ?? 0), columnX.total, rowY, { width: 60, align: 'right' });
-
-      doc.moveDown(0.8);
-      if (index < session.items.length - 1) {
-        doc.moveTo(50, doc.y).lineTo(545, doc.y).strokeColor('#e2e8f0').lineWidth(0.5).stroke();
-      }
-    });
-
-    doc.moveDown(1.2);
-
-    const subtotal = session.items.reduce((sum, item) => sum + (item.total ?? 0) + (item.discount ?? 0), 0);
+    const treatmentSubtotal = session.items.reduce((sum, item) => sum + (item.total ?? 0) + (item.discount ?? 0), 0);
+    const medicineSubtotal = (session.medicineItems ?? []).reduce(
+      (sum, item) => sum + (item.total ?? 0) + (item.discount ?? 0),
+      0,
+    );
+    const subtotal = treatmentSubtotal + medicineSubtotal;
     doc.fontSize(10).font('Helvetica-Bold').fillColor('#0f172a');
     doc.text('Summary', 50, doc.y);
     doc.font('Helvetica').fillColor('#1e293b');
     doc.moveDown(0.4);
+    if (treatmentSubtotal > 0) {
+      doc.text(`Treatment Subtotal: ${formatCurrency.format(treatmentSubtotal)}`);
+    }
+    if (medicineSubtotal > 0) {
+      doc.text(`Medicine Subtotal: ${formatCurrency.format(medicineSubtotal)}`);
+    }
     doc.text(`Subtotal: ${formatCurrency.format(subtotal)}`);
     doc.text(`Session Discount: ${formatCurrency.format(session.discount ?? 0)}`);
     doc.text(`Total Due: ${formatCurrency.format(session.total ?? 0)}`);
@@ -144,6 +165,11 @@ export async function GET(request, { params }) {
             treatment: true,
           },
         },
+        medicineItems: {
+          include: {
+            medicine: true,
+          },
+        },
       },
     });
 
@@ -173,6 +199,20 @@ export async function GET(request, { params }) {
               id: item.treatment.id,
               name: item.treatment.name,
               code: item.treatment.code,
+            }
+          : null,
+        quantity: item.quantity,
+        unitPrice: decimalToNumber(item.unitPrice),
+        discount: decimalToNumber(item.discount),
+        total: decimalToNumber(item.total),
+      })),
+      medicineItems: session.medicineItems.map((item) => ({
+        id: item.id,
+        medicine: item.medicine
+          ? {
+              id: item.medicine.id,
+              name: item.medicine.name,
+              code: item.medicine.code,
             }
           : null,
         quantity: item.quantity,

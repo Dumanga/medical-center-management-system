@@ -50,15 +50,17 @@ export function validateSessionPayload(payload) {
 
   const description = typeof payload?.description === 'string' ? payload.description.trim() : '';
 
-  const itemsInput = Array.isArray(payload?.items) ? payload.items : [];
-  if (itemsInput.length === 0) {
-    errors.push('Add at least one treatment to the session.');
+  const treatmentInput = Array.isArray(payload?.items) ? payload.items : [];
+  const medicineInput = Array.isArray(payload?.medicines) ? payload.medicines : [];
+
+  if (treatmentInput.length === 0 && medicineInput.length === 0) {
+    errors.push('Add at least one treatment or medicine to the session.');
   }
 
-  const normalizedItems = [];
-  let itemsTotal = 0;
+  const normalizedTreatments = [];
+  let treatmentsTotal = 0;
 
-  itemsInput.forEach((item, index) => {
+  treatmentInput.forEach((item, index) => {
     const treatmentId = parsePositiveInt(item?.treatmentId);
     if (!treatmentId) {
       errors.push(`Treatment selection is required for item ${index + 1}.`);
@@ -69,12 +71,12 @@ export function validateSessionPayload(payload) {
 
     const unitPriceResult = parseNonNegativeNumber(item?.unitPrice);
     if (unitPriceResult.error) {
-      errors.push(`Unit price is invalid for item ${index + 1}.`);
+      errors.push(`Unit price is invalid for treatment item ${index + 1}.`);
     }
 
     const discountResult = parseNonNegativeNumber(item?.discount ?? 0, { allowNull: true });
     if (discountResult.error) {
-      errors.push(`Discount is invalid for item ${index + 1}.`);
+      errors.push(`Discount is invalid for treatment item ${index + 1}.`);
     }
 
     const unitPrice = unitPriceResult.amount ?? 0;
@@ -82,14 +84,56 @@ export function validateSessionPayload(payload) {
     const lineSubtotal = quantity * unitPrice;
 
     if (lineDiscount > lineSubtotal) {
-      errors.push(`Discount cannot exceed subtotal for item ${index + 1}.`);
+      errors.push(`Discount cannot exceed subtotal for treatment item ${index + 1}.`);
     }
 
     const lineTotal = Math.max(0, lineSubtotal - lineDiscount);
-    itemsTotal += lineTotal;
+    treatmentsTotal += lineTotal;
 
-    normalizedItems.push({
+    normalizedTreatments.push({
       treatmentId,
+      quantity,
+      unitPrice,
+      discount: lineDiscount,
+      total: lineTotal,
+    });
+  });
+
+  const normalizedMedicines = [];
+  let medicinesTotal = 0;
+
+  medicineInput.forEach((item, index) => {
+    const medicineId = parsePositiveInt(item?.medicineId);
+    if (!medicineId) {
+      errors.push(`Medicine selection is required for medicine item ${index + 1}.`);
+    }
+
+    const quantityRaw = item?.quantity ?? 1;
+    const quantity = parsePositiveInt(quantityRaw) ?? 1;
+
+    const unitPriceResult = parseNonNegativeNumber(item?.unitPrice);
+    if (unitPriceResult.error) {
+      errors.push(`Unit price is invalid for medicine item ${index + 1}.`);
+    }
+
+    const discountResult = parseNonNegativeNumber(item?.discount ?? 0, { allowNull: true });
+    if (discountResult.error) {
+      errors.push(`Discount is invalid for medicine item ${index + 1}.`);
+    }
+
+    const unitPrice = unitPriceResult.amount ?? 0;
+    const lineDiscount = discountResult.amount ?? 0;
+    const lineSubtotal = quantity * unitPrice;
+
+    if (lineDiscount > lineSubtotal) {
+      errors.push(`Discount cannot exceed subtotal for medicine item ${index + 1}.`);
+    }
+
+    const lineTotal = Math.max(0, lineSubtotal - lineDiscount);
+    medicinesTotal += lineTotal;
+
+    normalizedMedicines.push({
+      medicineId,
       quantity,
       unitPrice,
       discount: lineDiscount,
@@ -103,11 +147,12 @@ export function validateSessionPayload(payload) {
   }
 
   const sessionDiscount = sessionDiscountResult.amount ?? 0;
-  if (sessionDiscount > itemsTotal) {
-    errors.push('Session discount cannot exceed treatment total.');
+  const subtotal = treatmentsTotal + medicinesTotal;
+  if (sessionDiscount > subtotal) {
+    errors.push('Session discount cannot exceed item total.');
   }
 
-  const total = Math.max(0, itemsTotal - sessionDiscount);
+  const total = Math.max(0, subtotal - sessionDiscount);
 
   return {
     isValid: errors.length === 0,
@@ -118,7 +163,8 @@ export function validateSessionPayload(payload) {
       description,
       discount: sessionDiscount,
       total,
-      items: normalizedItems,
+      items: normalizedTreatments,
+      medicines: normalizedMedicines,
     },
   };
 }

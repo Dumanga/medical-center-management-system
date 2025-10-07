@@ -65,6 +65,7 @@ model Session {
 
   patient Patient           @relation(fields: [patientId], references: [id], onDelete: Cascade)
   items   SessionTreatment[]
+  medicines SessionMedicine[]
 }
 
 model SessionTreatment {
@@ -80,6 +81,23 @@ model SessionTreatment {
 
   session   Session   @relation(fields: [sessionId], references: [id], onDelete: Cascade)
   treatment Treatment @relation(fields: [treatmentId], references: [id], onDelete: Restrict)
+}
+
+model SessionMedicine {
+  id         Int      @id @default(autoincrement())
+  sessionId  Int
+  medicineId Int
+  quantity   Int      @default(1)
+  unitPrice  Decimal  @db.Decimal(10, 2)
+  discount   Decimal? @db.Decimal(10, 2)
+  total      Decimal  @db.Decimal(10, 2)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  session  Session       @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  medicine MedicineStock @relation(fields: [medicineId], references: [id], onDelete: Restrict)
+
+  @@index([medicineId])
 }
 
 
@@ -105,5 +123,6 @@ model MedicineStock {
   updatedAt      DateTime     @updatedAt
 
   type MedicineType @relation(fields: [medicineTypeId], references: [id], onDelete: Restrict)
+  sessionItems SessionMedicine[]
 }
 

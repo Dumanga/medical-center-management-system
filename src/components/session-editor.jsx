@@ -5,6 +5,8 @@ import { format } from 'date-fns';
 import Select from './ui/select';
 import TreatmentPickerModal from './treatment-picker-modal';
 import TreatmentModal from './treatment-modal';
+import MedicinePickerModal from './medicine-picker-modal';
+import StockModal from './stock-modal';
 
 const TODAY_ISO = format(new Date(), 'yyyy-MM-dd');
 
@@ -30,6 +32,7 @@ const INITIAL_FORM = {
   description: '',
   discount: '0.00',
   items: [],
+  medicineItems: [],
 };
 
 let tempId = 0;
@@ -48,10 +51,41 @@ function createItemFromTreatment(treatment) {
   };
 }
 
+function createItemFromMedicine(medicine) {
+  tempId += 1;
+  const price = Number(medicine.sellingPrice ?? 0);
+  return {
+    tempId,
+    medicineId: medicine.id,
+    medicineName: medicine.name,
+    medicineCode: medicine.code,
+    quantity: '1',
+    unitPrice: price.toFixed(2),
+    discount: '0.00',
+    total: price,
+  };
+}
+
 function SessionSummary({ session }) {
-  const subtotal = session.items?.reduce((sum, item) => sum + ((item.quantity ?? 0) * (item.unitPrice ?? 0)), 0) ?? 0;
+  const treatmentSubtotal =
+    session.items?.reduce((sum, item) => sum + (item.total ?? 0) + (item.discount ?? 0), 0) ?? 0;
+  const medicineSubtotal =
+    session.medicineItems?.reduce((sum, item) => sum + (item.total ?? 0) + (item.discount ?? 0), 0) ?? 0;
+  const subtotal = treatmentSubtotal + medicineSubtotal;
   return (
     <div className="space-y-2 rounded-2xl border border-slate-100 bg-slate-50 px-5 py-4 text-sm text-slate-600">
+      {treatmentSubtotal > 0 ? (
+        <div className="flex items-center justify-between">
+          <span>Treatments</span>
+          <span className="font-semibold text-slate-900">{formatCurrency(treatmentSubtotal)}</span>
+        </div>
+      ) : null}
+      {medicineSubtotal > 0 ? (
+        <div className="flex items-center justify-between">
+          <span>Medicines</span>
+          <span className="font-semibold text-slate-900">{formatCurrency(medicineSubtotal)}</span>
+        </div>
+      ) : null}
       <div className="flex items-center justify-between">
         <span>Subtotal</span>
         <span className="font-semibold text-slate-900">{formatCurrency(subtotal)}</span>
@@ -145,6 +179,41 @@ function SessionView({ session, onBack }) {
         </div>
       </div>
 
+      {session.medicineItems?.length ? (
+        <div className="rounded-2xl border border-slate-100">
+          <div className="border-b border-slate-100 bg-slate-50 px-4 py-3">
+            <h3 className="text-sm font-semibold text-slate-800">Medicines</h3>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-slate-200 text-left">
+              <thead className="bg-white text-xs font-semibold uppercase tracking-wide text-slate-500">
+                <tr>
+                  <th className="px-4 py-3">Medicine</th>
+                  <th className="px-4 py-3">Quantity</th>
+                  <th className="px-4 py-3">Unit Price</th>
+                  <th className="px-4 py-3">Discount</th>
+                  <th className="px-4 py-3">Total</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 text-sm text-slate-700">
+                {session.medicineItems.map((item) => (
+                  <tr key={item.id}>
+                    <td className="px-4 py-3">
+                      <div className="font-medium text-slate-900">{item.medicine?.name ?? 'Medicine'}</div>
+                      <div className="text-xs text-slate-500">{item.medicine?.code ?? ''}</div>
+                    </td>
+                    <td className="px-4 py-3">{item.quantity}</td>
+                    <td className="px-4 py-3">{formatCurrency(item.unitPrice)}</td>
+                    <td className="px-4 py-3">{formatCurrency(item.discount ?? 0)}</td>
+                    <td className="px-4 py-3 font-semibold text-slate-900">{formatCurrency(item.total ?? 0)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      ) : null}
+
       {session.description ? (
         <div className="rounded-2xl border border-slate-100 bg-slate-50 px-5 py-4">
           <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500">Notes</h3>
@@ -160,6 +229,8 @@ export default function SessionEditor({
   session,
   patients,
   treatments,
+  medicines,
+  medicineTypes,
   appointments,
   onCancel,
   onSuccess,
@@ -170,6 +241,10 @@ export default function SessionEditor({
   const [availableTreatments, setAvailableTreatments] = useState(treatments ?? []);
   const [isTreatmentPickerOpen, setTreatmentPickerOpen] = useState(false);
   const [isTreatmentModalOpen, setTreatmentModalOpen] = useState(false);
+  const [availableMedicines, setAvailableMedicines] = useState(medicines ?? []);
+  const [availableMedicineTypes, setAvailableMedicineTypes] = useState(medicineTypes ?? []);
+  const [isMedicinePickerOpen, setMedicinePickerOpen] = useState(false);
+  const [isMedicineModalOpen, setMedicineModalOpen] = useState(false);
 
   useEffect(() => {
     if (mode === 'create') {
@@ -181,7 +256,9 @@ export default function SessionEditor({
 
   useEffect(() => {
     setAvailableTreatments(treatments ?? []);
-  }, [treatments]);
+    setAvailableMedicines(medicines ?? []);
+    setAvailableMedicineTypes(medicineTypes ?? []);
+  }, [treatments, medicines, medicineTypes]);
 
   const patientOptions = useMemo(
     () =>
@@ -221,7 +298,7 @@ export default function SessionEditor({
     [appointments],
   );
 
-  const sessionSubtotal = useMemo(
+  const treatmentsSubtotal = useMemo(
     () =>
       form.items.reduce((sum, item) => {
         const quantity = Number.parseInt(item.quantity, 10) || 0;
@@ -232,6 +309,20 @@ export default function SessionEditor({
       }, 0),
     [form.items],
   );
+
+  const medicinesSubtotal = useMemo(
+    () =>
+      form.medicineItems.reduce((sum, item) => {
+        const quantity = Number.parseInt(item.quantity, 10) || 0;
+        const unitPrice = Number.parseFloat(item.unitPrice) || 0;
+        const discount = Number.parseFloat(item.discount) || 0;
+        const gross = quantity * unitPrice;
+        return sum + Math.max(0, gross - discount);
+      }, 0),
+    [form.medicineItems],
+  );
+
+  const sessionSubtotal = treatmentsSubtotal + medicinesSubtotal;
 
   const sessionDiscount = Number.parseFloat(form.discount) || 0;
   const sessionTotal = Math.max(0, sessionSubtotal - sessionDiscount);
@@ -321,6 +412,84 @@ export default function SessionEditor({
     [handleAddTreatment],
   );
 
+  const handleAddMedicine = useCallback((medicine) => {
+    if (!medicine) {
+      return;
+    }
+    setForm((previous) => {
+      const existing = previous.medicineItems.find((item) => item.medicineId === medicine.id);
+      if (existing) {
+        const updatedItems = previous.medicineItems.map((item) =>
+          item.medicineId === medicine.id
+            ? { ...item, quantity: String(Number.parseInt(item.quantity, 10) + 1) }
+            : item,
+        );
+        return { ...previous, medicineItems: updatedItems };
+      }
+      return {
+        ...previous,
+        medicineItems: [...previous.medicineItems, createItemFromMedicine(medicine)],
+      };
+    });
+  }, []);
+
+  const handleMedicinePickerAdd = useCallback(
+    (medicine) => {
+      handleAddMedicine(medicine);
+    },
+    [handleAddMedicine],
+  );
+
+  const handleMedicinePickerClose = useCallback(() => {
+    setMedicinePickerOpen(false);
+  }, []);
+
+  const handleCreateMedicineClick = useCallback(() => {
+    setMedicineModalOpen(true);
+  }, []);
+
+  const handleMedicineModalClose = useCallback(() => {
+    setMedicineModalOpen(false);
+  }, []);
+
+  const handleMedicineModalSuccess = useCallback(
+    ({ stock }) => {
+      if (!stock) {
+        return;
+      }
+
+      setAvailableMedicines((previous) => {
+        const exists = previous.some((item) => item.id === stock.id);
+        const next = exists
+          ? previous.map((item) => (item.id === stock.id ? stock : item))
+          : [...previous, stock];
+        next.sort((a, b) => a.name.localeCompare(b.name));
+        return next;
+      });
+
+      if (stock.type) {
+        setAvailableMedicineTypes((previous) => {
+          if (previous.some((type) => type.id === stock.type.id)) {
+            return previous;
+          }
+          const next = [...previous, { id: stock.type.id, name: stock.type.name }];
+          next.sort((a, b) => a.name.localeCompare(b.name));
+          return next;
+        });
+      }
+
+      handleAddMedicine({
+        id: stock.id,
+        name: stock.name,
+        code: stock.code,
+        sellingPrice: stock.sellingPrice,
+      });
+      setMedicineModalOpen(false);
+      setMedicinePickerOpen(true);
+    },
+    [handleAddMedicine],
+  );
+
   const handleItemChange = useCallback((tempItemId, field, value) => {
     setForm((previous) => ({
       ...previous,
@@ -332,6 +501,22 @@ export default function SessionEditor({
     setForm((previous) => ({
       ...previous,
       items: previous.items.filter((item) => item.tempId !== tempItemId),
+    }));
+  }, []);
+
+  const handleMedicineItemChange = useCallback((tempItemId, field, value) => {
+    setForm((previous) => ({
+      ...previous,
+      medicineItems: previous.medicineItems.map((item) =>
+        item.tempId === tempItemId ? { ...item, [field]: value } : item,
+      ),
+    }));
+  }, []);
+
+  const handleRemoveMedicine = useCallback((tempItemId) => {
+    setForm((previous) => ({
+      ...previous,
+      medicineItems: previous.medicineItems.filter((item) => item.tempId !== tempItemId),
     }));
   }, []);
 
@@ -348,6 +533,12 @@ export default function SessionEditor({
         discount: Number.parseFloat(form.discount || '0'),
         items: form.items.map((item) => ({
           treatmentId: item.treatmentId,
+          quantity: Number.parseInt(item.quantity, 10) || 0,
+          unitPrice: Number.parseFloat(item.unitPrice) || 0,
+          discount: Number.parseFloat(item.discount || '0') || 0,
+        })),
+        medicines: form.medicineItems.map((item) => ({
+          medicineId: item.medicineId,
           quantity: Number.parseInt(item.quantity, 10) || 0,
           unitPrice: Number.parseFloat(item.unitPrice) || 0,
           discount: Number.parseFloat(item.discount || '0') || 0,
@@ -551,6 +742,18 @@ export default function SessionEditor({
             </table>
           </div>
           <div className="flex flex-col items-end gap-2 border-t border-slate-100 bg-slate-50 px-4 py-3 text-sm text-slate-600">
+            {treatmentsSubtotal > 0 ? (
+              <div className="flex w-full max-w-sm items-center justify-between">
+                <span>Treatments</span>
+                <span className="font-semibold text-slate-900">{formatCurrency(treatmentsSubtotal)}</span>
+              </div>
+            ) : null}
+            {medicinesSubtotal > 0 ? (
+              <div className="flex w-full max-w-sm items-center justify-between">
+                <span>Medicines</span>
+                <span className="font-semibold text-slate-900">{formatCurrency(medicinesSubtotal)}</span>
+              </div>
+            ) : null}
             <div className="flex w-full max-w-sm items-center justify-between">
               <span>Subtotal</span>
               <span className="font-semibold text-slate-900">{formatCurrency(sessionSubtotal)}</span>
@@ -566,6 +769,106 @@ export default function SessionEditor({
           </div>
         </div>
 
+        <div className="rounded-2xl border border-slate-100">
+          <div className="flex flex-col gap-3 border-b border-slate-100 bg-slate-50 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h3 className="text-sm font-semibold text-slate-800">Medicines</h3>
+              <p className="text-xs text-slate-500">Add medicines from inventory to include them in this billing session.</p>
+            </div>
+            <div className="flex flex-col items-stretch gap-2 sm:flex-row sm:items-center sm:gap-3">
+              <span className="text-xs font-medium uppercase tracking-wide text-slate-400 sm:text-right">
+                {form.medicineItems.length} selected
+              </span>
+              <button
+                type="button"
+                onClick={() => setMedicinePickerOpen(true)}
+                className="inline-flex items-center justify-center rounded-lg border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-600 shadow-sm transition hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-600"
+              >
+                + Add Medicines
+              </button>
+            </div>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-slate-200 text-left">
+              <thead className="bg-white text-xs font-semibold uppercase tracking-wide text-slate-500">
+                <tr>
+                  <th className="px-4 py-3">Medicine</th>
+                  <th className="px-4 py-3">Quantity</th>
+                  <th className="px-4 py-3">Unit Price</th>
+                  <th className="px-4 py-3">Discount</th>
+                  <th className="px-4 py-3">Total</th>
+                  <th className="px-4 py-3">Action</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 text-sm text-slate-700">
+                {form.medicineItems.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} className="px-4 py-6 text-center text-slate-500">
+                      No medicines added yet. Use the Add Medicines button above to include them in this session.
+                    </td>
+                  </tr>
+                ) : null}
+                {form.medicineItems.map((item) => {
+                  const quantity = Number.parseInt(item.quantity, 10) || 0;
+                  const unitPrice = Number.parseFloat(item.unitPrice) || 0;
+                  const discount = Number.parseFloat(item.discount) || 0;
+                  const gross = quantity * unitPrice;
+                  const total = Math.max(0, gross - discount);
+
+                  return (
+                    <tr key={item.tempId} className="transition hover:bg-slate-50">
+                      <td className="px-4 py-3">
+                        <div className="font-medium text-slate-900">{item.medicineName}</div>
+                        <div className="text-xs text-slate-500">{item.medicineCode ?? ''}</div>
+                      </td>
+                      <td className="px-4 py-3">
+                        <input
+                          type="number"
+                          min="1"
+                          step="1"
+                          value={item.quantity}
+                          onChange={(event) => handleMedicineItemChange(item.tempId, 'quantity', event.target.value)}
+                          className="w-20 rounded-lg border border-slate-200 px-2 py-1 text-sm text-slate-900 shadow-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-200"
+                        />
+                      </td>
+                      <td className="px-4 py-3">
+                        <input
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          value={item.unitPrice}
+                          onChange={(event) => handleMedicineItemChange(item.tempId, 'unitPrice', event.target.value)}
+                          className="w-28 rounded-lg border border-slate-200 px-2 py-1 text-sm text-slate-900 shadow-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-200"
+                        />
+                      </td>
+                      <td className="px-4 py-3">
+                        <input
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          value={item.discount}
+                          onChange={(event) => handleMedicineItemChange(item.tempId, 'discount', event.target.value)}
+                          className="w-28 rounded-lg border border-slate-200 px-2 py-1 text-sm text-slate-900 shadow-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-200"
+                        />
+                      </td>
+                      <td className="px-4 py-3 font-semibold text-slate-900">{formatCurrency(total)}</td>
+                      <td className="px-4 py-3">
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveMedicine(item.tempId)}
+                          className="rounded-lg border border-slate-200 px-3 py-1 text-xs font-semibold text-rose-600 shadow-sm transition hover:border-rose-200 hover:bg-rose-50"
+                        >
+                          Remove
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
         {submitErrors.length > 0 ? (
           <div className="space-y-1 rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-600">
             {submitErrors.map((message) => (
@@ -577,7 +880,9 @@ export default function SessionEditor({
         <div className="flex items-center justify-end gap-3">
           <button
             type="submit"
-            disabled={isSubmitting || form.items.length === 0}
+            disabled={
+              isSubmitting || (form.items.length === 0 && form.medicineItems.length === 0)
+            }
             className="inline-flex items-center justify-center rounded-lg bg-sky-600 px-4 py-2 text-sm font-semibold text-white shadow transition hover:bg-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-300 disabled:cursor-not-allowed disabled:bg-slate-300"
           >
             {isSubmitting ? 'Creating...' : 'Create Session'}
@@ -597,6 +902,21 @@ export default function SessionEditor({
         onClose={handleTreatmentModalClose}
         onSuccess={handleTreatmentModalSuccess}
         initialTreatment={null}
+      />
+      <MedicinePickerModal
+        isOpen={isMedicinePickerOpen}
+        medicines={availableMedicines}
+        selectedMedicineIds={form.medicineItems.map((item) => item.medicineId)}
+        onAdd={handleMedicinePickerAdd}
+        onClose={handleMedicinePickerClose}
+        onCreateMedicine={handleCreateMedicineClick}
+      />
+      <StockModal
+        isOpen={isMedicineModalOpen}
+        onClose={handleMedicineModalClose}
+        onSuccess={handleMedicineModalSuccess}
+        initialStock={null}
+        medicineTypes={availableMedicineTypes}
       />
     </div>
   );

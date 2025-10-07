@@ -13,6 +13,7 @@ function parsePositiveInt(value) {
   return numeric;
 }
 
+
 function parsePagination(searchParams) {
   const pageParam = parsePositiveInt(searchParams.get('page')) ?? 1;
   const sizeParam = parsePositiveInt(searchParams.get('pageSize')) ?? DEFAULT_PAGE_SIZE;
@@ -69,8 +70,25 @@ function serializeSession(session) {
     discount: decimalToNumber(item.discount),
     total: decimalToNumber(item.total),
   })) ?? [];
+  const medicineItems = session.medicineItems?.map((item) => ({
+    id: item.id,
+    medicineId: item.medicineId,
+    medicine: item.medicine
+      ? {
+          id: item.medicine.id,
+          name: item.medicine.name,
+          code: item.medicine.code,
+          sellingPrice: decimalToNumber(item.medicine.sellingPrice),
+        }
+      : null,
+    quantity: item.quantity,
+    unitPrice: decimalToNumber(item.unitPrice),
+    discount: decimalToNumber(item.discount),
+    total: decimalToNumber(item.total),
+  })) ?? [];
 
   const itemsTotal = items.reduce((sum, item) => sum + (item.total ?? 0), 0);
+  const medicinesTotal = medicineItems.reduce((sum, item) => sum + (item.total ?? 0), 0);
 
   return {
     id: session.id,
@@ -88,7 +106,9 @@ function serializeSession(session) {
     discount: decimalToNumber(session.discount) ?? 0,
     total: decimalToNumber(session.total) ?? 0,
     items,
+    medicineItems,
     itemsTotal,
+    medicinesTotal,
     createdAt: session.createdAt?.toISOString?.() ?? null,
     updatedAt: session.updatedAt?.toISOString?.() ?? null,
   };
@@ -114,6 +134,11 @@ export async function GET(request) {
           items: {
             include: {
               treatment: true,
+            },
+          },
+          medicineItems: {
+            include: {
+              medicine: true,
             },
           },
         },
@@ -147,7 +172,7 @@ export async function POST(request) {
       return NextResponse.json({ message: 'Validation failed.', errors: validation.errors }, { status: 400 });
     }
 
-    const { patientId, date, description, discount, total, items } = validation.values;
+    const { patientId, date, description, discount, total, items, medicines } = validation.values;
 
     const created = await prisma.session.create({
       data: {
@@ -165,12 +190,26 @@ export async function POST(request) {
             total: new Prisma.Decimal(item.total),
           })),
         },
+        medicineItems: {
+          create: medicines.map((item) => ({
+            medicineId: item.medicineId,
+            quantity: item.quantity,
+            unitPrice: new Prisma.Decimal(item.unitPrice),
+            discount: item.discount ? new Prisma.Decimal(item.discount) : null,
+            total: new Prisma.Decimal(item.total),
+          })),
+        },
       },
       include: {
         patient: true,
         items: {
           include: {
             treatment: true,
+          },
+        },
+        medicineItems: {
+          include: {
+            medicine: true,
           },
         },
       },

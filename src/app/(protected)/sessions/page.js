@@ -15,6 +15,7 @@ function parsePositiveInt(value, fallback) {
   return parsed;
 }
 
+
 function decimalToNumber(value) {
   if (value === null || value === undefined) {
     return 0;
@@ -82,7 +83,15 @@ async function loadInitialData(searchParams) {
       }
     : undefined;
 
-  const [totalCount, sessionsRaw, patientsRaw, treatmentsRaw, appointmentsRaw] = await Promise.all([
+  const [
+    totalCount,
+    sessionsRaw,
+    patientsRaw,
+    treatmentsRaw,
+    appointmentsRaw,
+    medicinesRaw,
+    medicineTypesRaw,
+  ] = await Promise.all([
     prisma.session.count({ where }),
     prisma.session.findMany({
       where,
@@ -94,6 +103,11 @@ async function loadInitialData(searchParams) {
         items: {
           include: {
             treatment: true,
+          },
+        },
+        medicineItems: {
+          include: {
+            medicine: true,
           },
         },
       },
@@ -115,6 +129,15 @@ async function loadInitialData(searchParams) {
         patient: true,
       },
     }),
+    prisma.medicineStock.findMany({
+      orderBy: [{ name: 'asc' }],
+      include: {
+        type: true,
+      },
+    }),
+    prisma.medicineType.findMany({
+      orderBy: [{ name: 'asc' }],
+    }),
   ]);
 
   const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
@@ -133,6 +156,24 @@ async function loadInitialData(searchParams) {
     name: treatment.name,
     code: treatment.code,
     price: decimalToNumber(treatment.price),
+  }));
+
+  const medicines = medicinesRaw.map((medicine) => ({
+    id: medicine.id,
+    name: medicine.name,
+    code: medicine.code,
+    sellingPrice: decimalToNumber(medicine.sellingPrice),
+    type: medicine.type
+      ? {
+          id: medicine.type.id,
+          name: medicine.type.name,
+        }
+      : null,
+  }));
+
+  const medicineTypes = medicineTypesRaw.map((type) => ({
+    id: type.id,
+    name: type.name,
   }));
 
   const appointments = appointmentsRaw.map((appointment) => ({
@@ -159,6 +200,8 @@ async function loadInitialData(searchParams) {
     },
     patients,
     treatments,
+    medicines,
+    medicineTypes,
     appointments,
   };
 }
@@ -172,6 +215,8 @@ export default async function SessionsPage({ searchParams }) {
       initialMeta={initialState.meta}
       patients={initialState.patients}
       treatments={initialState.treatments}
+      medicines={initialState.medicines}
+      medicineTypes={initialState.medicineTypes}
       appointments={initialState.appointments}
     />
   );

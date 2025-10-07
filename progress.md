@@ -46,3 +46,4 @@
 - Delivered billing sessions module with inline creation/view, validations, and PDF invoice generation.
 
 - Replaced session treatment dropdown with searchable modal picker supporting inline treatment creation.
+- Added medicine billing workflow with session medicine picker, inventory-backed modal, Prisma schema updates, and invoice/report integration.
