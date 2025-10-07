@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
-import PDFDocument from 'pdfkit';
-import { createRequire } from 'module';
+import { chromium } from 'playwright';
 import prisma from '@/lib/prisma';
 
 export const runtime = 'nodejs';
@@ -9,7 +8,6 @@ function parseId(value) {
   const parsed = Number.parseInt(`${value ?? ''}`, 10);
   return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
 }
-
 
 function decimalToNumber(value) {
   if (value === null || value === undefined) {
@@ -25,7 +23,8 @@ function decimalToNumber(value) {
   if (typeof value.toNumber === 'function') {
     return value.toNumber();
   }
-  return Number(value) || 0;
+  const numeric = Number(value);
+  return Number.isFinite(numeric) ? numeric : 0;
 }
 
 const formatCurrency = new Intl.NumberFormat('en-LK', {
@@ -34,144 +33,272 @@ const formatCurrency = new Intl.NumberFormat('en-LK', {
   minimumFractionDigits: 2,
 });
 
-function safeNumber(value) {
-  const numeric = Number(value);
-  return Number.isFinite(numeric) ? numeric : 0;
+function renderLineItems(session) {
+  const treatments = (session.items ?? []).map((item) => ({
+    id: `treatment-${item.id}`,
+    type: 'Treatment',
+    name: item.treatment?.name ?? 'Treatment',
+    code: item.treatment?.code ?? '',
+    quantity: item.quantity,
+    unitPrice: decimalToNumber(item.unitPrice),
+    discount: decimalToNumber(item.discount),
+    total: decimalToNumber(item.total),
+  }));
+
+  const medicines = (session.medicineItems ?? []).map((item) => ({
+    id: `medicine-${item.id}`,
+    type: 'Medicine',
+    name: item.medicine?.name ?? 'Medicine',
+    code: item.medicine?.code ?? '',
+    quantity: item.quantity,
+    unitPrice: decimalToNumber(item.unitPrice),
+    discount: decimalToNumber(item.discount),
+    total: decimalToNumber(item.total),
+  }));
+
+  return [...treatments, ...medicines];
 }
 
-const require = createRequire(import.meta.url);
-const helveticaFontPath = require.resolve('pdfkit/js/data/Helvetica.afm');
-const helveticaBoldFontPath = require.resolve('pdfkit/js/data/Helvetica-Bold.afm');
-const helveticaObliqueFontPath = require.resolve('pdfkit/js/data/Helvetica-Oblique.afm');
-async function buildInvoiceBuffer(session) {
-  return new Promise((resolve, reject) => {
-    const doc = new PDFDocument({ size: 'A5', margin: 36, font: null });
-    const chunks = [];
+function buildInvoiceHtml(session) {
+  const items = renderLineItems(session);
+  const treatmentSubtotal = items
+    .filter((item) => item.type === 'Treatment')
+    .reduce((sum, item) => sum + item.total + item.discount, 0);
+  const medicineSubtotal = items
+    .filter((item) => item.type === 'Medicine')
+    .reduce((sum, item) => sum + item.total + item.discount, 0);
+  const subtotal = treatmentSubtotal + medicineSubtotal;
 
-    doc.on('data', (chunk) => chunks.push(chunk));
-    doc.on('end', () => resolve(Buffer.concat(chunks)));
-    doc.on('error', reject);
+  const formattedDate = session.date ? new Date(session.date).toLocaleDateString() : 'N/A';
+  const createdDate = session.createdAt ? new Date(session.createdAt).toLocaleString() : 'N/A';
 
-    doc.registerFont('Helvetica', helveticaFontPath);
-    doc.registerFont('Helvetica-Bold', helveticaBoldFontPath);
-    doc.registerFont('Helvetica-Oblique', helveticaObliqueFontPath);
-    doc.font('Helvetica');
-
-    const clinicName = 'Medical Center Management System';
-    doc.fillColor('#0f172a').fontSize(22).font('Helvetica-Bold').text(clinicName);
-    doc.moveDown(0.5);
-    doc.fontSize(10).fillColor('#475569').font('Helvetica').text('Billing Session Invoice', { align: 'left' });
-
-    doc.moveDown(1.5);
-
-    doc.fillColor('#0f172a').fontSize(12).font('Helvetica-Bold').text('Invoice Details');
-    doc.moveDown(0.4);
-    doc.fontSize(10).font('Helvetica').fillColor('#1e293b');
-    doc.text(`Session ID: ${session.id}`);
-    doc.text(`Session Date: ${session.date ? new Date(session.date).toLocaleDateString() : '-'}`);
-    doc.text(`Created: ${session.createdAt ? new Date(session.createdAt).toLocaleString() : '-'}`);
-
-    doc.moveDown(1);
-    doc.fontSize(12).font('Helvetica-Bold').fillColor('#0f172a').text('Patient');
-    doc.moveDown(0.4);
-    doc.fontSize(10).font('Helvetica').fillColor('#1e293b');
-    doc.text(`Name: ${session.patient?.name ?? 'N/A'}`);
-    if (session.patient?.phone) {
-      doc.text(`Phone: ${session.patient.phone}`);
-    }
-    if (session.patient?.email) {
-      doc.text(`Email: ${session.patient.email}`);
-    }
-
-    doc.moveDown(1);
-    const renderLineItemsTable = (title, rows, labelAccessor) => {
-      if (!rows.length) {
-        return;
+  const head = `<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <style>
+      * {
+        box-sizing: border-box;
+        font-family: 'Inter', 'Segoe UI', sans-serif;
+        color: #0f172a;
       }
+      body {
+        margin: 0;
+        padding: 18mm 16mm;
+        background: #f8fafc;
+        font-size: 12px;
+      }
+      .invoice {
+        background: #ffffff;
+        border-radius: 12px;
+        border: 1px solid #e2e8f0;
+        padding: 20px 22px;
+      }
+      h1 {
+        font-size: 20px;
+        margin: 0 0 4px;
+        color: #0f172a;
+      }
+      .subtitle {
+        font-size: 11px;
+        color: #475569;
+      }
+      .flex {
+        display: flex;
+        justify-content: space-between;
+        gap: 18px;
+        flex-wrap: wrap;
+      }
+      .section {
+        margin-top: 18px;
+      }
+      .card {
+        background: #f8fafc;
+        border-radius: 10px;
+        border: 1px solid #e2e8f0;
+        padding: 14px 16px;
+        flex: 1 1 160px;
+      }
+      .card h3 {
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        margin: 0;
+        color: #64748b;
+      }
+      .card p {
+        margin: 6px 0 0;
+        font-size: 13px;
+        font-weight: 600;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 12px;
+      }
+      th {
+        text-align: left;
+        font-size: 10px;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: #64748b;
+        padding: 8px 6px;
+        border-bottom: 1px solid #e2e8f0;
+      }
+      td {
+        padding: 10px 6px;
+        border-bottom: 1px solid #f1f5f9;
+        font-size: 12px;
+        color: #1e293b;
+      }
+      tr:last-child td {
+        border-bottom: none;
+      }
+      .summary {
+        margin-top: 12px;
+        padding: 12px;
+        background: #f1f5f9;
+        border-radius: 10px;
+        border: 1px solid #e2e8f0;
+        font-size: 12px;
+      }
+      .summary-row {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 4px;
+      }
+      .summary-row:last-child {
+        margin-bottom: 0;
+        font-weight: 600;
+        font-size: 13px;
+      }
+      .notes {
+        margin-top: 16px;
+        padding: 12px 14px;
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 10px;
+        font-size: 12px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="invoice">
+      <header>
+        <h1>Medical Center Management System</h1>
+        <div class="subtitle">Billing Session Invoice</div>
+      </header>
 
-      doc.fontSize(12).font('Helvetica-Bold').fillColor('#0f172a').text(title);
-      doc.moveDown(0.5);
+      <section class="section flex">
+        <div class="card">
+          <h3>Invoice Details</h3>
+          <p>Session ID: <strong>#${session.id}</strong></p>
+          <p>Session Date: ${formattedDate}</p>
+          <p>Generated: ${createdDate}</p>
+        </div>
+        <div class="card">
+          <h3>Patient</h3>
+          <p>${session.patient?.name ?? 'N/A'}</p>
+          <p style="font-size:11px;color:#475569;margin-top:4px;">
+            ${session.patient?.phone ?? 'No phone on record'}<br />
+            ${session.patient?.email ?? 'No email available'}
+          </p>
+        </div>
+      </section>
 
-      const tableTop = doc.y;
-      const columnX = {
-        label: 50,
-        qty: 260,
-        unit: 320,
-        discount: 400,
-        total: 480,
-      };
+      <section class="section">
+        <h3 style="font-size:12px;margin:0 0 6px;color:#0f172a;">Invoice Items</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Item</th>
+              <th>Type</th>
+              <th>Code</th>
+              <th style="text-align:right;">Qty</th>
+              <th style="text-align:right;">Unit Price</th>
+              <th style="text-align:right;">Discount</th>
+              <th style="text-align:right;">Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${
+              items.length === 0
+                ? '<tr><td colspan="7" style="text-align:center;padding:16px 6px;color:#64748b;">No invoice items recorded.</td></tr>'
+                : items
+                    .map(
+                      (item) => `
+                        <tr>
+                          <td>${item.name}</td>
+                          <td style="color:#475569;">${item.type}</td>
+                          <td style="color:#475569;">${item.code || '—'}</td>
+                          <td style="text-align:right;">${item.quantity}</td>
+                          <td style="text-align:right;">${formatCurrency.format(item.unitPrice)}</td>
+                          <td style="text-align:right;">${formatCurrency.format(item.discount)}</td>
+                          <td style="text-align:right;">${formatCurrency.format(item.total)}</td>
+                        </tr>
+                      `,
+                    )
+                    .join('')
+            }
+          </tbody>
+        </table>
 
-      doc.fontSize(10).font('Helvetica-Bold').fillColor('#0f172a');
-      doc.text('Item', columnX.label, tableTop);
-      doc.text('Qty', columnX.qty, tableTop);
-      doc.text('Unit Price', columnX.unit, tableTop, { width: 60, align: 'right' });
-      doc.text('Discount', columnX.discount, tableTop, { width: 60, align: 'right' });
-      doc.text('Total', columnX.total, tableTop, { width: 60, align: 'right' });
+        <div class="summary">
+          ${
+            treatmentSubtotal > 0
+              ? `<div class="summary-row"><span>Treatment Subtotal</span><span>${formatCurrency.format(
+                  treatmentSubtotal,
+                )}</span></div>`
+              : ''
+          }
+          ${
+            medicineSubtotal > 0
+              ? `<div class="summary-row"><span>Medicine Subtotal</span><span>${formatCurrency.format(
+                  medicineSubtotal,
+                )}</span></div>`
+              : ''
+          }
+          <div class="summary-row"><span>Subtotal</span><span>${formatCurrency.format(subtotal)}</span></div>
+          <div class="summary-row"><span>Session Discount</span><span>${formatCurrency.format(
+            decimalToNumber(session.discount),
+          )}</span></div>
+          <div class="summary-row"><span>Total Due</span><span>${formatCurrency.format(
+            decimalToNumber(session.total),
+          )}</span></div>
+        </div>
+      </section>
 
-      doc.moveTo(50, doc.y + 4).lineTo(545, doc.y + 4).strokeColor('#cbd5f5').lineWidth(1).stroke();
+      ${
+        session.description
+          ? `<section class="notes"><strong>Notes:</strong><br/>${session.description
+              .split('\n')
+              .map((line) => `<span>${line}</span>`)
+              .join('<br/>')}</section>`
+          : ''
+      }
+    </div>
+  </body>
+</html>`;
 
-      doc.font('Helvetica').fillColor('#1e293b');
+  return head;
+}
 
-      rows.forEach((row, index) => {
-        const rowY = doc.y + 6;
-        doc.text(labelAccessor(row), columnX.label, rowY, { width: 200 });
-        doc.text(`${row.quantity}`, columnX.qty, rowY);
-        doc.text(formatCurrency.format(safeNumber(row.unitPrice)), columnX.unit, rowY, {
-          width: 60,
-          align: 'right',
-        });
-        doc.text(formatCurrency.format(safeNumber(row.discount)), columnX.discount, rowY, {
-          width: 60,
-          align: 'right',
-        });
-        doc.text(formatCurrency.format(safeNumber(row.total)), columnX.total, rowY, { width: 60, align: 'right' });
-
-        doc.moveDown(0.8);
-        if (index < rows.length - 1) {
-          doc.moveTo(50, doc.y).lineTo(545, doc.y).strokeColor('#e2e8f0').lineWidth(0.5).stroke();
-        }
-      });
-
-      doc.moveDown(1.2);
-    };
-
-    renderLineItemsTable('Treatments', session.items, (row) => row.treatment?.name ?? 'Treatment');
-    renderLineItemsTable('Medicines', session.medicineItems ?? [], (row) => row.medicine?.name ?? 'Medicine');
-
-    const treatmentSubtotal = session.items.reduce(
-      (sum, item) => sum + safeNumber(item.total) + safeNumber(item.discount),
-      0,
-    );
-    const medicineSubtotal = (session.medicineItems ?? []).reduce(
-      (sum, item) => sum + safeNumber(item.total) + safeNumber(item.discount),
-      0,
-    );
-    const subtotal = treatmentSubtotal + medicineSubtotal;
-    doc.fontSize(10).font('Helvetica-Bold').fillColor('#0f172a');
-    doc.text('Summary', 50, doc.y);
-    doc.font('Helvetica').fillColor('#1e293b');
-    doc.moveDown(0.4);
-    if (treatmentSubtotal > 0) {
-      doc.text(`Treatment Subtotal: ${formatCurrency.format(treatmentSubtotal)}`);
-    }
-    if (medicineSubtotal > 0) {
-      doc.text(`Medicine Subtotal: ${formatCurrency.format(medicineSubtotal)}`);
-    }
-    doc.text(`Subtotal: ${formatCurrency.format(safeNumber(subtotal))}`);
-    doc.text(`Session Discount: ${formatCurrency.format(safeNumber(session.discount))}`);
-    doc.text(`Total Due: ${formatCurrency.format(safeNumber(session.total))}`);
-
-    if (session.description) {
-      doc.moveDown(1);
-      doc.fontSize(10).font('Helvetica-Bold').fillColor('#0f172a').text('Notes');
-      doc.font('Helvetica').fillColor('#1e293b').text(session.description, { width: 500 });
-    }
-
-    doc.moveDown(2);
-    doc.fontSize(9).fillColor('#94a3b8').text('Generated by Medical Center Management System.', { align: 'center' });
-
-    doc.end();
-  });
+async function generateInvoicePdf(session) {
+  const browser = await chromium.launch({ headless: true, args: ['--no-sandbox'] });
+  try {
+    const page = await browser.newPage();
+    await page.setContent(buildInvoiceHtml(session), {
+      waitUntil: 'networkidle',
+    });
+    return await page.pdf({
+      format: 'A5',
+      margin: { top: '18mm', right: '16mm', bottom: '18mm', left: '16mm' },
+      printBackground: true,
+    });
+  } finally {
+    await browser.close();
+  }
 }
 
 export async function GET(request, { params }) {
@@ -219,37 +346,11 @@ export async function GET(request, { params }) {
       description: session.description ?? '',
       discount: decimalToNumber(session.discount) ?? 0,
       total: decimalToNumber(session.total) ?? 0,
-      items: session.items.map((item) => ({
-        id: item.id,
-        treatment: item.treatment
-          ? {
-              id: item.treatment.id,
-              name: item.treatment.name,
-              code: item.treatment.code,
-            }
-          : null,
-        quantity: item.quantity,
-        unitPrice: decimalToNumber(item.unitPrice),
-        discount: decimalToNumber(item.discount),
-        total: decimalToNumber(item.total),
-      })),
-      medicineItems: session.medicineItems.map((item) => ({
-        id: item.id,
-        medicine: item.medicine
-          ? {
-              id: item.medicine.id,
-              name: item.medicine.name,
-              code: item.medicine.code,
-            }
-          : null,
-        quantity: item.quantity,
-        unitPrice: decimalToNumber(item.unitPrice),
-        discount: decimalToNumber(item.discount),
-        total: decimalToNumber(item.total),
-      })),
+      items: session.items,
+      medicineItems: session.medicineItems,
     };
 
-    const pdfBuffer = await buildInvoiceBuffer(serialised);
+    const pdfBuffer = await generateInvoicePdf(serialised);
 
     return new NextResponse(pdfBuffer, {
       headers: {
@@ -269,3 +370,4 @@ export async function GET(request, { params }) {
     );
   }
 }
+
