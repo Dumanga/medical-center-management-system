@@ -7,25 +7,19 @@ import prisma from '@/lib/prisma';
 export const runtime = 'nodejs';
 
 const LOGO_PATH = path.join(process.cwd(), 'public', 'invoice-logo.png');
-let cachedLogoDataUrl = null;
 
 function getLogoDataUrl() {
-  if (cachedLogoDataUrl) {
-    return cachedLogoDataUrl;
-  }
-
   try {
     const file = fs.readFileSync(LOGO_PATH);
-    cachedLogoDataUrl = `data:image/png;base64,${file.toString('base64')}`;
-    return cachedLogoDataUrl;
+    return `data:image/png;base64,${file.toString('base64')}`;
   } catch (error) {
     console.warn('Invoice logo not found at public/invoice-logo.png. Using fallback.', error?.message ?? error);
-    cachedLogoDataUrl =
+    return (
       'data:image/svg+xml;utf8,' +
       encodeURIComponent(
-        `<svg xmlns="http://www.w3.org/2000/svg" width="120" height="120" viewBox="0 0 120 120"><circle cx="60" cy="60" r="55" fill="#2563eb" opacity="0.2"/><circle cx="60" cy="60" r="40" fill="#2563eb" opacity="0.3"/><circle cx="60" cy="60" r="26" fill="#2563eb"/></svg>`,
-      );
-    return cachedLogoDataUrl;
+        `<svg xmlns="http://www.w3.org/2000/svg" width="160" height="160" viewBox="0 0 160 160"><defs><linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#0ea5e9"/><stop offset="100%" stop-color="#2563eb"/></linearGradient></defs><circle cx="80" cy="80" r="76" fill="url(#grad)" opacity="0.85"/></svg>`
+      )
+    );
   }
 }
 
@@ -125,18 +119,19 @@ function buildInvoiceHtml(session) {
         position: relative;
       }
       .watermark {
-        position: absolute;
+        position: fixed;
         inset: 0;
         display: flex;
         justify-content: center;
         align-items: center;
         pointer-events: none;
-        opacity: 0.25;
+        opacity: 0.18;
+        z-index: 0;
       }
       .watermark img {
-        width: 78%;
-        max-width: 360px;
-        filter: saturate(0.85);
+        width: 82%;
+        max-width: 380px;
+        filter: saturate(0.9);
       }
       header {
         display: flex;
@@ -265,7 +260,7 @@ function buildInvoiceHtml(session) {
     </style>
   </head>
   <body>
-    <div class="invoice">
+      <div class="invoice">
       <div class="watermark"><img src="${logoSrc}" alt="Sri Ayurveda watermark" /></div>
       <header>
         <div class="brand">
