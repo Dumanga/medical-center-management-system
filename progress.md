@@ -48,3 +48,4 @@
 - Replaced session treatment dropdown with searchable modal picker supporting inline treatment creation.
 - Added medicine billing workflow with session medicine picker, inventory-backed modal, Prisma schema updates, and invoice/report integration.
 - Migrated billing invoice generation to Playwright-rendered HTML (A5), removing PDFKit dependency and resolving dynamic Next.js runtime issues.
+- Fine-tuned Playwright invoice template (tighter margins, streamlined header cards) to match refreshed layout requirements.

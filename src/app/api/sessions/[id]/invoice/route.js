@@ -106,7 +106,7 @@ function buildInvoiceHtml(session) {
       }
       body {
         margin: 0;
-        padding: 8mm 10mm;
+        padding: 4mm 5mm;
         background: #ffffff;
         font-size: 11.5px;
       }
@@ -291,13 +291,6 @@ function buildInvoiceHtml(session) {
               ${session.patient?.phone ?? 'No phone on record'}<br />
               ${session.patient?.email ?? 'No email available'}
             </p>
-          </div>
-          <div class="card">
-            <h3>Payment Summary</h3>
-            <p>Total Due: ${formatCurrency.format(decimalToNumber(session.total))}</p>
-            <p style="font-size:11px;color:#475569;margin-top:4px;">Discount Applied: ${formatCurrency.format(
-              decimalToNumber(session.discount),
-            )}</p>
           </div>
         </div>
       </section>
