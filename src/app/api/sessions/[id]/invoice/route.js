@@ -85,51 +85,64 @@ function buildInvoiceHtml(session) {
       }
       body {
         margin: 0;
-        padding: 18mm 16mm;
-        background: #f8fafc;
-        font-size: 12px;
+        padding: 14mm 12mm;
+        background: #ffffff;
+        font-size: 11.5px;
       }
       .invoice {
-        background: #ffffff;
-        border-radius: 12px;
-        border: 1px solid #e2e8f0;
-        padding: 20px 22px;
+        width: 100%;
+        min-height: calc(100% - 28mm);
+        display: flex;
+        flex-direction: column;
+        gap: 18px;
       }
-      h1 {
-        font-size: 20px;
-        margin: 0 0 4px;
-        color: #0f172a;
+      header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 16px;
       }
-      .subtitle {
+      .brand h1 {
+        font-size: 22px;
+        margin: 0;
+        letter-spacing: 0.02em;
+      }
+      .brand p {
+        margin: 4px 0 0;
+        font-size: 12px;
+        color: #475569;
+      }
+      .invoice-meta {
+        text-align: right;
         font-size: 11px;
         color: #475569;
       }
-      .flex {
-        display: flex;
-        justify-content: space-between;
-        gap: 18px;
-        flex-wrap: wrap;
-      }
       .section {
-        margin-top: 18px;
+        display: grid;
+        gap: 16px;
+      }
+      .info-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+        gap: 14px;
       }
       .card {
-        background: #f8fafc;
-        border-radius: 10px;
         border: 1px solid #e2e8f0;
-        padding: 14px 16px;
-        flex: 1 1 160px;
+        border-radius: 10px;
+        padding: 12px 14px;
+        background: #f8fafc;
+        min-height: 96px;
       }
       .card h3 {
         font-size: 11px;
         text-transform: uppercase;
         letter-spacing: 0.08em;
-        margin: 0;
+        margin: 0 0 6px;
         color: #64748b;
       }
       .card p {
-        margin: 6px 0 0;
-        font-size: 13px;
+        margin: 4px 0;
+        font-size: 12.5px;
         font-weight: 600;
       }
       table {
@@ -155,13 +168,18 @@ function buildInvoiceHtml(session) {
       tr:last-child td {
         border-bottom: none;
       }
+      tbody tr:nth-child(odd) td {
+        background: #f8fafc;
+      }
       .summary {
         margin-top: 12px;
-        padding: 12px;
-        background: #f1f5f9;
+        padding: 12px 14px;
+        background: #f8fafc;
         border-radius: 10px;
         border: 1px solid #e2e8f0;
         font-size: 12px;
+        width: 55%;
+        margin-left: auto;
       }
       .summary-row {
         display: flex;
@@ -174,36 +192,59 @@ function buildInvoiceHtml(session) {
         font-size: 13px;
       }
       .notes {
-        margin-top: 16px;
+        margin-top: 12px;
         padding: 12px 14px;
-        background: #f8fafc;
-        border: 1px solid #e2e8f0;
-        border-radius: 10px;
+        border-left: 3px solid #0ea5e9;
+        background: #f0f9ff;
+        border-radius: 6px;
         font-size: 12px;
+      }
+      footer {
+        margin-top: auto;
+        font-size: 10px;
+        color: #64748b;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
       }
     </style>
   </head>
   <body>
     <div class="invoice">
       <header>
-        <h1>Medical Center Management System</h1>
-        <div class="subtitle">Billing Session Invoice</div>
+        <div class="brand">
+          <h1>Medical Center Management System</h1>
+          <p>Billing Session Invoice</p>
+        </div>
+        <div class="invoice-meta">
+          <div>Invoice #: ${session.id.toString().padStart(4, '0')}</div>
+          <div>Generated: ${createdDate}</div>
+        </div>
       </header>
 
-      <section class="section flex">
-        <div class="card">
-          <h3>Invoice Details</h3>
-          <p>Session ID: <strong>#${session.id}</strong></p>
-          <p>Session Date: ${formattedDate}</p>
-          <p>Generated: ${createdDate}</p>
-        </div>
-        <div class="card">
-          <h3>Patient</h3>
-          <p>${session.patient?.name ?? 'N/A'}</p>
-          <p style="font-size:11px;color:#475569;margin-top:4px;">
-            ${session.patient?.phone ?? 'No phone on record'}<br />
-            ${session.patient?.email ?? 'No email available'}
-          </p>
+      <section class="section">
+        <div class="info-grid">
+          <div class="card">
+            <h3>Invoice Details</h3>
+            <p>Session ID: #${session.id}</p>
+            <p>Session Date: ${formattedDate}</p>
+            <p>Created: ${createdDate}</p>
+          </div>
+          <div class="card">
+            <h3>Patient</h3>
+            <p>${session.patient?.name ?? 'N/A'}</p>
+            <p style="font-size:11px;color:#475569;margin-top:4px;">
+              ${session.patient?.phone ?? 'No phone on record'}<br />
+              ${session.patient?.email ?? 'No email available'}
+            </p>
+          </div>
+          <div class="card">
+            <h3>Payment Summary</h3>
+            <p>Total Due: ${formatCurrency.format(decimalToNumber(session.total))}</p>
+            <p style="font-size:11px;color:#475569;margin-top:4px;">Discount Applied: ${formatCurrency.format(
+              decimalToNumber(session.discount),
+            )}</p>
+          </div>
         </div>
       </section>
 
@@ -277,6 +318,11 @@ function buildInvoiceHtml(session) {
               .join('<br/>')}</section>`
           : ''
       }
+
+      <footer>
+        <span>Thank you for trusting our medical center.</span>
+        <span>Generated on ${createdDate}</span>
+      </footer>
     </div>
   </body>
 </html>`;
@@ -293,8 +339,14 @@ async function generateInvoicePdf(session) {
     });
     return await page.pdf({
       format: 'A5',
-      margin: { top: '18mm', right: '16mm', bottom: '18mm', left: '16mm' },
+      margin: {
+        top: '10mm',
+        bottom: '10mm',
+        left: '8mm',
+        right: '8mm',
+      },
       printBackground: true,
+      preferCSSPageSize: true,
     });
   } finally {
     await browser.close();
@@ -370,4 +422,3 @@ export async function GET(request, { params }) {
     );
   }
 }
-
