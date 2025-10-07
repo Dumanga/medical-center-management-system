@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import PDFDocument from 'pdfkit';
 import prisma from '@/lib/prisma';
 
+export const runtime = 'nodejs';
+
 function parseId(value) {
   const parsed = Number.parseInt(`${value ?? ''}`, 10);
   return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
@@ -38,7 +40,7 @@ function safeNumber(value) {
 
 async function buildInvoiceBuffer(session) {
   return new Promise((resolve, reject) => {
-    const doc = new PDFDocument({ size: 'A4', margin: 50 });
+    const doc = new PDFDocument({ size: 'A5', margin: 36 });
     const chunks = [];
 
     doc.on('data', (chunk) => chunks.push(chunk));
