@@ -31,6 +31,11 @@ const formatCurrency = new Intl.NumberFormat('en-LK', {
   minimumFractionDigits: 2,
 });
 
+function safeNumber(value) {
+  const numeric = Number(value);
+  return Number.isFinite(numeric) ? numeric : 0;
+}
+
 async function buildInvoiceBuffer(session) {
   return new Promise((resolve, reject) => {
     const doc = new PDFDocument({ size: 'A4', margin: 50 });
@@ -99,9 +104,15 @@ async function buildInvoiceBuffer(session) {
         const rowY = doc.y + 6;
         doc.text(labelAccessor(row), columnX.label, rowY, { width: 200 });
         doc.text(`${row.quantity}`, columnX.qty, rowY);
-        doc.text(formatCurrency.format(row.unitPrice ?? 0), columnX.unit, rowY, { width: 60, align: 'right' });
-        doc.text(formatCurrency.format(row.discount ?? 0), columnX.discount, rowY, { width: 60, align: 'right' });
-        doc.text(formatCurrency.format(row.total ?? 0), columnX.total, rowY, { width: 60, align: 'right' });
+        doc.text(formatCurrency.format(safeNumber(row.unitPrice)), columnX.unit, rowY, {
+          width: 60,
+          align: 'right',
+        });
+        doc.text(formatCurrency.format(safeNumber(row.discount)), columnX.discount, rowY, {
+          width: 60,
+          align: 'right',
+        });
+        doc.text(formatCurrency.format(safeNumber(row.total)), columnX.total, rowY, { width: 60, align: 'right' });
 
         doc.moveDown(0.8);
         if (index < rows.length - 1) {
@@ -115,9 +126,12 @@ async function buildInvoiceBuffer(session) {
     renderLineItemsTable('Treatments', session.items, (row) => row.treatment?.name ?? 'Treatment');
     renderLineItemsTable('Medicines', session.medicineItems ?? [], (row) => row.medicine?.name ?? 'Medicine');
 
-    const treatmentSubtotal = session.items.reduce((sum, item) => sum + (item.total ?? 0) + (item.discount ?? 0), 0);
+    const treatmentSubtotal = session.items.reduce(
+      (sum, item) => sum + safeNumber(item.total) + safeNumber(item.discount),
+      0,
+    );
     const medicineSubtotal = (session.medicineItems ?? []).reduce(
-      (sum, item) => sum + (item.total ?? 0) + (item.discount ?? 0),
+      (sum, item) => sum + safeNumber(item.total) + safeNumber(item.discount),
       0,
     );
     const subtotal = treatmentSubtotal + medicineSubtotal;
@@ -131,9 +145,9 @@ async function buildInvoiceBuffer(session) {
     if (medicineSubtotal > 0) {
       doc.text(`Medicine Subtotal: ${formatCurrency.format(medicineSubtotal)}`);
     }
-    doc.text(`Subtotal: ${formatCurrency.format(subtotal)}`);
-    doc.text(`Session Discount: ${formatCurrency.format(session.discount ?? 0)}`);
-    doc.text(`Total Due: ${formatCurrency.format(session.total ?? 0)}`);
+    doc.text(`Subtotal: ${formatCurrency.format(safeNumber(subtotal))}`);
+    doc.text(`Session Discount: ${formatCurrency.format(safeNumber(session.discount))}`);
+    doc.text(`Total Due: ${formatCurrency.format(safeNumber(session.total))}`);
 
     if (session.description) {
       doc.moveDown(1);
