@@ -35,6 +35,18 @@ const INITIAL_FORM = {
   medicineItems: [],
 };
 
+const DEFAULT_APPOINTMENT_CHARGE = {
+  treatmentId: 'static:appointment-charge',
+  treatmentName: 'Appointment Charges',
+  treatmentCode: 'APPT-FEE',
+  quantity: '1',
+  unitPrice: '2000.00',
+  discount: '0.00',
+  total: 2000,
+  tempId: 'appointment-charge',
+  isLocked: true,
+};
+
 let tempId = 0;
 
 function createItemFromTreatment(treatment) {
@@ -241,7 +253,7 @@ export default function SessionEditor({
 
   useEffect(() => {
     if (mode === 'create') {
-      setForm({ ...INITIAL_FORM, date: TODAY_ISO });
+      setForm({ ...INITIAL_FORM, date: TODAY_ISO, items: [DEFAULT_APPOINTMENT_CHARGE] });
       setSubmitErrors([]);
       setSubmitting(false);
     }
@@ -523,6 +535,7 @@ export default function SessionEditor({
         quantity: item.quantity,
         unitPrice: item.unitPrice,
         discount: item.discount,
+        isLocked: item.isLocked,
       })),
       ...form.medicineItems.map((item) => ({
         kind: 'medicine',
@@ -540,6 +553,9 @@ export default function SessionEditor({
   const handleLineItemChange = useCallback(
     (lineItem, field, value) => {
       if (lineItem.kind === 'treatment') {
+        if (lineItem.isLocked) {
+          return;
+        }
         handleItemChange(lineItem.tempId, field, value);
       } else {
         handleMedicineItemChange(lineItem.tempId, field, value);
@@ -551,6 +567,9 @@ export default function SessionEditor({
   const handleLineItemRemove = useCallback(
     (lineItem) => {
       if (lineItem.kind === 'treatment') {
+        if (lineItem.isLocked) {
+          return;
+        }
         handleRemoveItem(lineItem.tempId);
       } else {
         handleRemoveMedicine(lineItem.tempId);
@@ -773,7 +792,8 @@ export default function SessionEditor({
                           step="1"
                           value={item.quantity}
                           onChange={(event) => handleLineItemChange(item, 'quantity', event.target.value)}
-                          className={`w-20 rounded-lg border border-slate-200 px-2 py-1 text-sm text-slate-900 shadow-sm focus:outline-none focus:ring-1 ${item.kind === 'treatment' ? 'focus:border-sky-500 focus:ring-sky-200' : 'focus:border-emerald-500 focus:ring-emerald-200'}`}
+                          disabled={item.isLocked}
+                          className={`w-20 rounded-lg border border-slate-200 px-2 py-1 text-sm text-slate-900 shadow-sm focus:outline-none focus:ring-1 ${item.kind === 'treatment' ? 'focus:border-sky-500 focus:ring-sky-200' : 'focus:border-emerald-500 focus:ring-emerald-200'} ${item.isLocked ? 'bg-slate-100 text-slate-500 cursor-not-allowed' : ''}`}
                         />
                       </td>
                       <td className="px-4 py-3">
@@ -783,7 +803,8 @@ export default function SessionEditor({
                           step="0.01"
                           value={item.unitPrice}
                           onChange={(event) => handleLineItemChange(item, 'unitPrice', event.target.value)}
-                          className={`w-28 rounded-lg border border-slate-200 px-2 py-1 text-sm text-slate-900 shadow-sm focus:outline-none focus:ring-1 ${item.kind === 'treatment' ? 'focus:border-sky-500 focus:ring-sky-200' : 'focus:border-emerald-500 focus:ring-emerald-200'}`}
+                          disabled={item.isLocked}
+                          className={`w-28 rounded-lg border border-slate-200 px-2 py-1 text-sm text-slate-900 shadow-sm focus:outline-none focus:ring-1 ${item.kind === 'treatment' ? 'focus:border-sky-500 focus:ring-sky-200' : 'focus:border-emerald-500 focus:ring-emerald-200'} ${item.isLocked ? 'bg-slate-100 text-slate-500 cursor-not-allowed' : ''}`}
                         />
                       </td>
                       <td className="px-4 py-3">
@@ -793,7 +814,8 @@ export default function SessionEditor({
                           step="0.01"
                           value={item.discount}
                           onChange={(event) => handleLineItemChange(item, 'discount', event.target.value)}
-                          className={`w-28 rounded-lg border border-slate-200 px-2 py-1 text-sm text-slate-900 shadow-sm focus:outline-none focus:ring-1 ${item.kind === 'treatment' ? 'focus:border-sky-500 focus:ring-sky-200' : 'focus:border-emerald-500 focus:ring-emerald-200'}`}
+                          disabled={item.isLocked}
+                          className={`w-28 rounded-lg border border-slate-200 px-2 py-1 text-sm text-slate-900 shadow-sm focus:outline-none focus:ring-1 ${item.kind === 'treatment' ? 'focus:border-sky-500 focus:ring-sky-200' : 'focus:border-emerald-500 focus:ring-emerald-200'} ${item.isLocked ? 'bg-slate-100 text-slate-500 cursor-not-allowed' : ''}`}
                         />
                       </td>
                       <td className="px-4 py-3 font-semibold text-slate-900">{formatCurrency(total)}</td>
@@ -801,7 +823,8 @@ export default function SessionEditor({
                         <button
                           type="button"
                           onClick={() => handleLineItemRemove(item)}
-                          className="rounded-lg border border-slate-200 px-3 py-1 text-xs font-semibold text-rose-600 shadow-sm transition hover:border-rose-200 hover:bg-rose-50"
+                          disabled={item.isLocked}
+                          className="rounded-lg border border-slate-200 px-3 py-1 text-xs font-semibold text-rose-600 shadow-sm transition hover:border-rose-200 hover:bg-rose-50 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400"
                         >
                           Remove
                         </button>
