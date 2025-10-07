@@ -317,52 +317,6 @@ export default function SessionEditor({
 
   const sessionSubtotal = treatmentsSubtotal + medicinesSubtotal;
 
-  const editableLineItems = useMemo(
-    () => [
-      ...form.items.map((item) => ({
-        kind: 'treatment',
-        tempId: item.tempId,
-        name: item.treatmentName,
-        code: item.treatmentCode ?? '',
-        quantity: item.quantity,
-        unitPrice: item.unitPrice,
-        discount: item.discount,
-      })),
-      ...form.medicineItems.map((item) => ({
-        kind: 'medicine',
-        tempId: item.tempId,
-        name: item.medicineName,
-        code: item.medicineCode ?? '',
-        quantity: item.quantity,
-        unitPrice: item.unitPrice,
-        discount: item.discount,
-      })),
-    ],
-    [form.items, form.medicineItems],
-  );
-
-  const handleLineItemChange = useCallback(
-    (lineItem, field, value) => {
-      if (lineItem.kind === 'treatment') {
-        handleItemChange(lineItem.tempId, field, value);
-      } else {
-        handleMedicineItemChange(lineItem.tempId, field, value);
-      }
-    },
-    [handleItemChange, handleMedicineItemChange],
-  );
-
-  const handleLineItemRemove = useCallback(
-    (lineItem) => {
-      if (lineItem.kind === 'treatment') {
-        handleRemoveItem(lineItem.tempId);
-      } else {
-        handleRemoveMedicine(lineItem.tempId);
-      }
-    },
-    [handleRemoveItem, handleRemoveMedicine],
-  );
-
   const sessionDiscount = Number.parseFloat(form.discount) || 0;
   const sessionTotal = Math.max(0, sessionSubtotal - sessionDiscount);
 
@@ -558,6 +512,52 @@ export default function SessionEditor({
       medicineItems: previous.medicineItems.filter((item) => item.tempId !== tempItemId),
     }));
   }, []);
+
+  const editableLineItems = useMemo(
+    () => [
+      ...form.items.map((item) => ({
+        kind: 'treatment',
+        tempId: item.tempId,
+        name: item.treatmentName,
+        code: item.treatmentCode ?? '',
+        quantity: item.quantity,
+        unitPrice: item.unitPrice,
+        discount: item.discount,
+      })),
+      ...form.medicineItems.map((item) => ({
+        kind: 'medicine',
+        tempId: item.tempId,
+        name: item.medicineName,
+        code: item.medicineCode ?? '',
+        quantity: item.quantity,
+        unitPrice: item.unitPrice,
+        discount: item.discount,
+      })),
+    ],
+    [form.items, form.medicineItems],
+  );
+
+  const handleLineItemChange = useCallback(
+    (lineItem, field, value) => {
+      if (lineItem.kind === 'treatment') {
+        handleItemChange(lineItem.tempId, field, value);
+      } else {
+        handleMedicineItemChange(lineItem.tempId, field, value);
+      }
+    },
+    [handleItemChange, handleMedicineItemChange],
+  );
+
+  const handleLineItemRemove = useCallback(
+    (lineItem) => {
+      if (lineItem.kind === 'treatment') {
+        handleRemoveItem(lineItem.tempId);
+      } else {
+        handleRemoveMedicine(lineItem.tempId);
+      }
+    },
+    [handleRemoveItem, handleRemoveMedicine],
+  );
 
   const handleSubmit = useCallback(
     async (event) => {
