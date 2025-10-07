@@ -45,3 +45,4 @@
 - Enabled inline editing for medicine types with PATCH API support from the dashboard modal.
 - Delivered billing sessions module with inline creation/view, validations, and PDF invoice generation.
 
+- Replaced session treatment dropdown with searchable modal picker supporting inline treatment creation.

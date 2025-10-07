@@ -3,6 +3,8 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { format } from 'date-fns';
 import Select from './ui/select';
+import TreatmentPickerModal from './treatment-picker-modal';
+import TreatmentModal from './treatment-modal';
 
 const TODAY_ISO = format(new Date(), 'yyyy-MM-dd');
 
@@ -165,6 +167,9 @@ export default function SessionEditor({
   const [form, setForm] = useState({ ...INITIAL_FORM, date: TODAY_ISO });
   const [submitErrors, setSubmitErrors] = useState([]);
   const [isSubmitting, setSubmitting] = useState(false);
+  const [availableTreatments, setAvailableTreatments] = useState(treatments ?? []);
+  const [isTreatmentPickerOpen, setTreatmentPickerOpen] = useState(false);
+  const [isTreatmentModalOpen, setTreatmentModalOpen] = useState(false);
 
   useEffect(() => {
     if (mode === 'create') {
@@ -174,6 +179,10 @@ export default function SessionEditor({
     }
   }, [mode]);
 
+  useEffect(() => {
+    setAvailableTreatments(treatments ?? []);
+  }, [treatments]);
+
   const patientOptions = useMemo(
     () =>
       patients.map((patient) => ({
@@ -181,15 +190,6 @@ export default function SessionEditor({
         label: `${patient.name}${patient.phone ? ` (${patient.phone})` : ''}`,
       })),
     [patients],
-  );
-
-  const treatmentOptions = useMemo(
-    () =>
-      treatments.map((treatment) => ({
-        value: String(treatment.id),
-        label: `${treatment.name} • ${formatCurrency(Number(treatment.price ?? 0))}`,
-      })),
-    [treatments],
   );
 
   const appointmentOptions = useMemo(
@@ -259,29 +259,66 @@ export default function SessionEditor({
     [appointmentOptions],
   );
 
-  const handleAddTreatment = useCallback(
-    (treatmentId) => {
-      const treatment = treatments.find((item) => String(item.id) === String(treatmentId));
+  const handleAddTreatment = useCallback((treatment) => {
+    if (!treatment) {
+      return;
+    }
+    setForm((previous) => {
+      const existing = previous.items.find((item) => item.treatmentId === treatment.id);
+      if (existing) {
+        const updatedItems = previous.items.map((item) =>
+          item.treatmentId === treatment.id
+            ? { ...item, quantity: String(Number.parseInt(item.quantity, 10) + 1) }
+            : item,
+        );
+        return { ...previous, items: updatedItems };
+      }
+      return {
+        ...previous,
+        items: [...previous.items, createItemFromTreatment(treatment)],
+      };
+    });
+  }, []);
+
+  const handleTreatmentPickerAdd = useCallback(
+    (treatment) => {
+      handleAddTreatment(treatment);
+    },
+    [handleAddTreatment],
+  );
+
+  const handleTreatmentPickerClose = useCallback(() => {
+    setTreatmentPickerOpen(false);
+  }, []);
+
+  const handleCreateTreatmentClick = useCallback(() => {
+    setTreatmentModalOpen(true);
+  }, []);
+
+  const handleTreatmentModalClose = useCallback(() => {
+    setTreatmentModalOpen(false);
+  }, []);
+
+  const handleTreatmentModalSuccess = useCallback(
+    ({ treatment }) => {
       if (!treatment) {
         return;
       }
-      setForm((previous) => {
-        const existing = previous.items.find((item) => item.treatmentId === treatment.id);
-        if (existing) {
-          const updatedItems = previous.items.map((item) =>
-            item.treatmentId === treatment.id
-              ? { ...item, quantity: String(Number.parseInt(item.quantity, 10) + 1) }
-              : item,
-          );
-          return { ...previous, items: updatedItems };
-        }
-        return {
-          ...previous,
-          items: [...previous.items, createItemFromTreatment(treatment)],
-        };
+
+      setAvailableTreatments((previous) => {
+        const exists = previous.some((item) => item.id === treatment.id);
+        const next = exists
+          ? previous.map((item) => (item.id === treatment.id ? treatment : item))
+          : [...previous, treatment];
+        next.sort((a, b) => a.name.localeCompare(b.name));
+        return next;
       });
+
+      handleAddTreatment(treatment);
+      setTreatmentModalOpen(false);
+      setTreatmentPickerOpen(true);
     },
-    [treatments],
+    [handleAddTreatment],
   );
 
   const handleItemChange = useCallback((tempItemId, field, value) => {
@@ -353,7 +390,7 @@ export default function SessionEditor({
         <div>
           <h2 className="text-xl font-semibold text-slate-900">Create Billing Session</h2>
           <p className="text-sm text-slate-600">
-            Select treatments, adjust pricing, and generate a professional invoice for the patient.
+            Choose treatments, adjust pricing, and generate a professional invoice for the patient.
           </p>
         </div>
         <button
@@ -424,15 +461,17 @@ export default function SessionEditor({
               <h3 className="text-sm font-semibold text-slate-800">Treatments</h3>
               <p className="text-xs text-slate-500">Add treatments, adjust prices, and apply discounts per treatment.</p>
             </div>
-            <div className="w-full sm:w-72">
-              <Select
-                placeholder="Add treatment"
-                options={treatmentOptions}
-                value=""
-                onChange={(value) => {
-                  handleAddTreatment(Number.parseInt(value, 10));
-                }}
-              />
+            <div className="flex flex-col items-stretch gap-2 sm:flex-row sm:items-center sm:gap-3">
+              <span className="text-xs font-medium uppercase tracking-wide text-slate-400 sm:text-right">
+                {form.items.length} selected
+              </span>
+              <button
+                type="button"
+                onClick={() => setTreatmentPickerOpen(true)}
+                className="inline-flex items-center justify-center rounded-lg border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-600 shadow-sm transition hover:border-sky-200 hover:bg-sky-50 hover:text-sky-600"
+              >
+                + Add Treatments
+              </button>
             </div>
           </div>
           <div className="overflow-x-auto">
@@ -450,8 +489,8 @@ export default function SessionEditor({
               <tbody className="divide-y divide-slate-100 text-sm text-slate-700">
                 {form.items.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="px-4 py-6 text-center text-slate-500">
-                      No treatments added yet. Use the selector above to add treatments to this session.
+                      <td colSpan={6} className="px-4 py-6 text-center text-slate-500">
+                        No treatments added yet. Use the Add Treatments button above to include them in this session.
                     </td>
                   </tr>
                 ) : null}
@@ -545,14 +584,20 @@ export default function SessionEditor({
           </button>
         </div>
       </form>
+      <TreatmentPickerModal
+        isOpen={isTreatmentPickerOpen}
+        treatments={availableTreatments}
+        selectedTreatmentIds={form.items.map((item) => item.treatmentId)}
+        onAdd={handleTreatmentPickerAdd}
+        onClose={handleTreatmentPickerClose}
+        onCreateTreatment={handleCreateTreatmentClick}
+      />
+      <TreatmentModal
+        isOpen={isTreatmentModalOpen}
+        onClose={handleTreatmentModalClose}
+        onSuccess={handleTreatmentModalSuccess}
+        initialTreatment={null}
+      />
     </div>
   );
 }
-
-
-
-
-
-
-
-
