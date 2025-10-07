@@ -1,8 +1,6 @@
 import { NextResponse } from 'next/server';
 import PDFDocument from 'pdfkit';
 import { createRequire } from 'module';
-import fs from 'fs';
-import path from 'path';
 import prisma from '@/lib/prisma';
 
 export const runtime = 'nodejs';
@@ -45,32 +43,9 @@ const require = createRequire(import.meta.url);
 const helveticaFontPath = require.resolve('pdfkit/js/data/Helvetica.afm');
 const helveticaBoldFontPath = require.resolve('pdfkit/js/data/Helvetica-Bold.afm');
 const helveticaObliqueFontPath = require.resolve('pdfkit/js/data/Helvetica-Oblique.afm');
-const dataDir = path.dirname(helveticaFontPath);
-const fallbackDataDir = path.join(process.cwd(), 'node_modules', 'pdfkit', 'js', 'data');
-
-function ensureFontData() {
-  try {
-    if (!fs.existsSync(fallbackDataDir)) {
-      fs.mkdirSync(fallbackDataDir, { recursive: true });
-    }
-
-    const files = fs.readdirSync(dataDir).filter((file) => file.toLowerCase().endsWith('.afm'));
-    for (const file of files) {
-      const source = path.join(dataDir, file);
-      const destination = path.join(fallbackDataDir, file);
-      if (!fs.existsSync(destination)) {
-        fs.copyFileSync(source, destination);
-      }
-    }
-  } catch (fontError) {
-    console.error('Failed to prepare PDFKit font data', fontError);
-  }
-}
-
 async function buildInvoiceBuffer(session) {
   return new Promise((resolve, reject) => {
-    ensureFontData();
-    const doc = new PDFDocument({ size: 'A5', margin: 36 });
+    const doc = new PDFDocument({ size: 'A5', margin: 36, font: null });
     const chunks = [];
 
     doc.on('data', (chunk) => chunks.push(chunk));
@@ -80,6 +55,7 @@ async function buildInvoiceBuffer(session) {
     doc.registerFont('Helvetica', helveticaFontPath);
     doc.registerFont('Helvetica-Bold', helveticaBoldFontPath);
     doc.registerFont('Helvetica-Oblique', helveticaObliqueFontPath);
+    doc.font('Helvetica');
 
     const clinicName = 'Medical Center Management System';
     doc.fillColor('#0f172a').fontSize(22).font('Helvetica-Bold').text(clinicName);
@@ -199,7 +175,8 @@ async function buildInvoiceBuffer(session) {
 }
 
 export async function GET(request, { params }) {
-  const id = parseId(params?.id);
+  const resolvedParams = await params;
+  const id = parseId(resolvedParams?.id);
 
   if (!id) {
     return NextResponse.json({ message: 'Invalid session id.' }, { status: 400 });

@@ -69,9 +69,22 @@ function serializeSession(session) {
   };
 }
 
-async function loadInitialData(searchParams) {
-  const page = parsePositiveInt(searchParams?.page, 1);
-  const query = typeof searchParams?.query === 'string' ? searchParams.query.trim() : '';
+function resolveSearchParamValue(params, key) {
+  if (!params) {
+    return undefined;
+  }
+  if (typeof params.get === 'function') {
+    return params.get(key);
+  }
+  return params[key];
+}
+
+async function loadInitialData(searchParamsPromise) {
+  const params = await searchParamsPromise;
+  const pageRaw = resolveSearchParamValue(params, 'page');
+  const queryRaw = resolveSearchParamValue(params, 'query');
+  const page = parsePositiveInt(pageRaw, 1);
+  const query = typeof queryRaw === 'string' ? queryRaw.trim() : '';
 
   const where = query
     ? {

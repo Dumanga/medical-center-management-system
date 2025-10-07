@@ -28,8 +28,9 @@ export async function POST(request) {
 
     const token = await createSessionToken(admin);
     const sessionCookie = getSessionCookieConfig();
+    const cookieStore = await cookies();
 
-    cookies().set({ ...sessionCookie, value: token });
+    cookieStore.set({ ...sessionCookie, value: token });
 
     return NextResponse.json({ success: true });
   } catch (error) {
