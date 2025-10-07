@@ -44,6 +44,7 @@ function createItemFromTreatment(treatment) {
     tempId,
     treatmentId: treatment.id,
     treatmentName: treatment.name,
+    treatmentCode: treatment.code ?? '',
     quantity: '1',
     unitPrice: price.toFixed(2),
     discount: '0.00',
@@ -103,6 +104,32 @@ function SessionSummary({ session }) {
 }
 
 function SessionView({ session, onBack }) {
+  const lineItems = useMemo(() => {
+    const treatmentLines = (session.items ?? []).map((item) => ({
+      id: item.id,
+      kind: 'Treatment',
+      name: item.treatment?.name ?? 'Treatment',
+      code: item.treatment?.code ?? '',
+      quantity: item.quantity,
+      unitPrice: item.unitPrice,
+      discount: item.discount ?? 0,
+      total: item.total ?? 0,
+    }));
+
+    const medicineLines = (session.medicineItems ?? []).map((item) => ({
+      id: item.id,
+      kind: 'Medicine',
+      name: item.medicine?.name ?? 'Medicine',
+      code: item.medicine?.code ?? '',
+      quantity: item.quantity,
+      unitPrice: item.unitPrice,
+      discount: item.discount ?? 0,
+      total: item.total ?? 0,
+    }));
+
+    return [...treatmentLines, ...medicineLines];
+  }, [session.items, session.medicineItems]);
+
   return (
     <div className="space-y-6 rounded-3xl border border-slate-100 bg-white p-6 shadow-2xl">
       <header className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
@@ -148,13 +175,15 @@ function SessionView({ session, onBack }) {
 
       <div className="rounded-2xl border border-slate-100">
         <div className="border-b border-slate-100 bg-slate-50 px-4 py-3">
-          <h3 className="text-sm font-semibold text-slate-800">Treatments</h3>
+          <h3 className="text-sm font-semibold text-slate-800">Invoice Items</h3>
         </div>
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-slate-200 text-left">
             <thead className="bg-white text-xs font-semibold uppercase tracking-wide text-slate-500">
               <tr>
-                <th className="px-4 py-3">Treatment</th>
+                <th className="px-4 py-3">Item</th>
+                <th className="px-4 py-3">Type</th>
+                <th className="px-4 py-3">Code</th>
                 <th className="px-4 py-3">Quantity</th>
                 <th className="px-4 py-3">Unit Price</th>
                 <th className="px-4 py-3">Discount</th>
@@ -162,12 +191,11 @@ function SessionView({ session, onBack }) {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 text-sm text-slate-700">
-              {session.items?.map((item) => (
-                <tr key={item.id}>
-                  <td className="px-4 py-3">
-                    <div className="font-medium text-slate-900">{item.treatment?.name ?? 'Treatment'}</div>
-                    <div className="text-xs text-slate-500">{item.treatment?.code ?? ''}</div>
-                  </td>
+              {lineItems.map((item) => (
+                <tr key={`${item.kind}-${item.id}`}>
+                  <td className="px-4 py-3 font-medium text-slate-900">{item.name}</td>
+                  <td className="px-4 py-3 text-slate-500">{item.kind}</td>
+                  <td className="px-4 py-3 text-slate-500">{item.code || '—'}</td>
                   <td className="px-4 py-3">{item.quantity}</td>
                   <td className="px-4 py-3">{formatCurrency(item.unitPrice)}</td>
                   <td className="px-4 py-3">{formatCurrency(item.discount ?? 0)}</td>
@@ -178,41 +206,6 @@ function SessionView({ session, onBack }) {
           </table>
         </div>
       </div>
-
-      {session.medicineItems?.length ? (
-        <div className="rounded-2xl border border-slate-100">
-          <div className="border-b border-slate-100 bg-slate-50 px-4 py-3">
-            <h3 className="text-sm font-semibold text-slate-800">Medicines</h3>
-          </div>
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-slate-200 text-left">
-              <thead className="bg-white text-xs font-semibold uppercase tracking-wide text-slate-500">
-                <tr>
-                  <th className="px-4 py-3">Medicine</th>
-                  <th className="px-4 py-3">Quantity</th>
-                  <th className="px-4 py-3">Unit Price</th>
-                  <th className="px-4 py-3">Discount</th>
-                  <th className="px-4 py-3">Total</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 text-sm text-slate-700">
-                {session.medicineItems.map((item) => (
-                  <tr key={item.id}>
-                    <td className="px-4 py-3">
-                      <div className="font-medium text-slate-900">{item.medicine?.name ?? 'Medicine'}</div>
-                      <div className="text-xs text-slate-500">{item.medicine?.code ?? ''}</div>
-                    </td>
-                    <td className="px-4 py-3">{item.quantity}</td>
-                    <td className="px-4 py-3">{formatCurrency(item.unitPrice)}</td>
-                    <td className="px-4 py-3">{formatCurrency(item.discount ?? 0)}</td>
-                    <td className="px-4 py-3 font-semibold text-slate-900">{formatCurrency(item.total ?? 0)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      ) : null}
 
       {session.description ? (
         <div className="rounded-2xl border border-slate-100 bg-slate-50 px-5 py-4">
@@ -323,6 +316,52 @@ export default function SessionEditor({
   );
 
   const sessionSubtotal = treatmentsSubtotal + medicinesSubtotal;
+
+  const editableLineItems = useMemo(
+    () => [
+      ...form.items.map((item) => ({
+        kind: 'treatment',
+        tempId: item.tempId,
+        name: item.treatmentName,
+        code: item.treatmentCode ?? '',
+        quantity: item.quantity,
+        unitPrice: item.unitPrice,
+        discount: item.discount,
+      })),
+      ...form.medicineItems.map((item) => ({
+        kind: 'medicine',
+        tempId: item.tempId,
+        name: item.medicineName,
+        code: item.medicineCode ?? '',
+        quantity: item.quantity,
+        unitPrice: item.unitPrice,
+        discount: item.discount,
+      })),
+    ],
+    [form.items, form.medicineItems],
+  );
+
+  const handleLineItemChange = useCallback(
+    (lineItem, field, value) => {
+      if (lineItem.kind === 'treatment') {
+        handleItemChange(lineItem.tempId, field, value);
+      } else {
+        handleMedicineItemChange(lineItem.tempId, field, value);
+      }
+    },
+    [handleItemChange, handleMedicineItemChange],
+  );
+
+  const handleLineItemRemove = useCallback(
+    (lineItem) => {
+      if (lineItem.kind === 'treatment') {
+        handleRemoveItem(lineItem.tempId);
+      } else {
+        handleRemoveMedicine(lineItem.tempId);
+      }
+    },
+    [handleRemoveItem, handleRemoveMedicine],
+  );
 
   const sessionDiscount = Number.parseFloat(form.discount) || 0;
   const sessionTotal = Math.max(0, sessionSubtotal - sessionDiscount);
@@ -665,11 +704,41 @@ export default function SessionEditor({
               </button>
             </div>
           </div>
+        </div>
+
+        <div className="rounded-2xl border border-slate-100">
+          <div className="flex flex-col gap-3 border-b border-slate-100 bg-slate-50 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h3 className="text-sm font-semibold text-slate-800">Medicines</h3>
+              <p className="text-xs text-slate-500">Add medicines from inventory to include them in this billing session.</p>
+            </div>
+            <div className="flex flex-col items-stretch gap-2 sm:flex-row sm:items-center sm:gap-3">
+              <span className="text-xs font-medium uppercase tracking-wide text-slate-400 sm:text-right">
+                {form.medicineItems.length} selected
+              </span>
+              <button
+                type="button"
+                onClick={() => setMedicinePickerOpen(true)}
+                className="inline-flex items-center justify-center rounded-lg border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-600 shadow-sm transition hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-600"
+              >
+                + Add Medicines
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div className="rounded-2xl border border-slate-100">
+          <div className="border-b border-slate-100 bg-slate-50 px-4 py-3">
+            <h3 className="text-sm font-semibold text-slate-800">Invoice Items</h3>
+            <p className="text-xs text-slate-500">Review every treatment and medicine added to this session before invoicing.</p>
+          </div>
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-slate-200 text-left">
               <thead className="bg-white text-xs font-semibold uppercase tracking-wide text-slate-500">
                 <tr>
-                  <th className="px-4 py-3">Treatment</th>
+                  <th className="px-4 py-3">Item</th>
+                  <th className="px-4 py-3">Type</th>
+                  <th className="px-4 py-3">Code</th>
                   <th className="px-4 py-3">Quantity</th>
                   <th className="px-4 py-3">Unit Price</th>
                   <th className="px-4 py-3">Discount</th>
@@ -678,14 +747,14 @@ export default function SessionEditor({
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 text-sm text-slate-700">
-                {form.items.length === 0 ? (
+                {editableLineItems.length === 0 ? (
                   <tr>
-                      <td colSpan={6} className="px-4 py-6 text-center text-slate-500">
-                        No treatments added yet. Use the Add Treatments button above to include them in this session.
+                    <td colSpan={8} className="px-4 py-6 text-center text-slate-500">
+                      No invoice items yet. Add treatments or medicines using the buttons above.
                     </td>
                   </tr>
                 ) : null}
-                {form.items.map((item) => {
+                {editableLineItems.map((item) => {
                   const quantity = Number.parseInt(item.quantity, 10) || 0;
                   const unitPrice = Number.parseFloat(item.unitPrice) || 0;
                   const discount = Number.parseFloat(item.discount) || 0;
@@ -693,16 +762,18 @@ export default function SessionEditor({
                   const total = Math.max(0, gross - discount);
 
                   return (
-                    <tr key={item.tempId} className="transition hover:bg-slate-50">
-                      <td className="px-4 py-3 font-medium text-slate-900">{item.treatmentName}</td>
+                    <tr key={`${item.kind}-${item.tempId}`} className="transition hover:bg-slate-50">
+                      <td className="px-4 py-3 font-medium text-slate-900">{item.name}</td>
+                      <td className="px-4 py-3 text-slate-500">{item.kind === 'treatment' ? 'Treatment' : 'Medicine'}</td>
+                      <td className="px-4 py-3 text-slate-500">{item.code || '—'}</td>
                       <td className="px-4 py-3">
                         <input
                           type="number"
                           min="1"
                           step="1"
                           value={item.quantity}
-                          onChange={(event) => handleItemChange(item.tempId, 'quantity', event.target.value)}
-                          className="w-20 rounded-lg border border-slate-200 px-2 py-1 text-sm text-slate-900 shadow-sm focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-200"
+                          onChange={(event) => handleLineItemChange(item, 'quantity', event.target.value)}
+                          className={`w-20 rounded-lg border border-slate-200 px-2 py-1 text-sm text-slate-900 shadow-sm focus:outline-none focus:ring-1 ${item.kind === 'treatment' ? 'focus:border-sky-500 focus:ring-sky-200' : 'focus:border-emerald-500 focus:ring-emerald-200'}`}
                         />
                       </td>
                       <td className="px-4 py-3">
@@ -711,8 +782,8 @@ export default function SessionEditor({
                           min="0"
                           step="0.01"
                           value={item.unitPrice}
-                          onChange={(event) => handleItemChange(item.tempId, 'unitPrice', event.target.value)}
-                          className="w-28 rounded-lg border border-slate-200 px-2 py-1 text-sm text-slate-900 shadow-sm focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-200"
+                          onChange={(event) => handleLineItemChange(item, 'unitPrice', event.target.value)}
+                          className={`w-28 rounded-lg border border-slate-200 px-2 py-1 text-sm text-slate-900 shadow-sm focus:outline-none focus:ring-1 ${item.kind === 'treatment' ? 'focus:border-sky-500 focus:ring-sky-200' : 'focus:border-emerald-500 focus:ring-emerald-200'}`}
                         />
                       </td>
                       <td className="px-4 py-3">
@@ -721,15 +792,15 @@ export default function SessionEditor({
                           min="0"
                           step="0.01"
                           value={item.discount}
-                          onChange={(event) => handleItemChange(item.tempId, 'discount', event.target.value)}
-                          className="w-28 rounded-lg border border-slate-200 px-2 py-1 text-sm text-slate-900 shadow-sm focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-200"
+                          onChange={(event) => handleLineItemChange(item, 'discount', event.target.value)}
+                          className={`w-28 rounded-lg border border-slate-200 px-2 py-1 text-sm text-slate-900 shadow-sm focus:outline-none focus:ring-1 ${item.kind === 'treatment' ? 'focus:border-sky-500 focus:ring-sky-200' : 'focus:border-emerald-500 focus:ring-emerald-200'}`}
                         />
                       </td>
                       <td className="px-4 py-3 font-semibold text-slate-900">{formatCurrency(total)}</td>
                       <td className="px-4 py-3">
                         <button
                           type="button"
-                          onClick={() => handleRemoveItem(item.tempId)}
+                          onClick={() => handleLineItemRemove(item)}
                           className="rounded-lg border border-slate-200 px-3 py-1 text-xs font-semibold text-rose-600 shadow-sm transition hover:border-rose-200 hover:bg-rose-50"
                         >
                           Remove
@@ -766,106 +837,6 @@ export default function SessionEditor({
               <span className="text-base font-semibold text-slate-900">Total</span>
               <span className="text-base font-semibold text-slate-900">{formatCurrency(sessionTotal)}</span>
             </div>
-          </div>
-        </div>
-
-        <div className="rounded-2xl border border-slate-100">
-          <div className="flex flex-col gap-3 border-b border-slate-100 bg-slate-50 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <h3 className="text-sm font-semibold text-slate-800">Medicines</h3>
-              <p className="text-xs text-slate-500">Add medicines from inventory to include them in this billing session.</p>
-            </div>
-            <div className="flex flex-col items-stretch gap-2 sm:flex-row sm:items-center sm:gap-3">
-              <span className="text-xs font-medium uppercase tracking-wide text-slate-400 sm:text-right">
-                {form.medicineItems.length} selected
-              </span>
-              <button
-                type="button"
-                onClick={() => setMedicinePickerOpen(true)}
-                className="inline-flex items-center justify-center rounded-lg border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-600 shadow-sm transition hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-600"
-              >
-                + Add Medicines
-              </button>
-            </div>
-          </div>
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-slate-200 text-left">
-              <thead className="bg-white text-xs font-semibold uppercase tracking-wide text-slate-500">
-                <tr>
-                  <th className="px-4 py-3">Medicine</th>
-                  <th className="px-4 py-3">Quantity</th>
-                  <th className="px-4 py-3">Unit Price</th>
-                  <th className="px-4 py-3">Discount</th>
-                  <th className="px-4 py-3">Total</th>
-                  <th className="px-4 py-3">Action</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 text-sm text-slate-700">
-                {form.medicineItems.length === 0 ? (
-                  <tr>
-                    <td colSpan={6} className="px-4 py-6 text-center text-slate-500">
-                      No medicines added yet. Use the Add Medicines button above to include them in this session.
-                    </td>
-                  </tr>
-                ) : null}
-                {form.medicineItems.map((item) => {
-                  const quantity = Number.parseInt(item.quantity, 10) || 0;
-                  const unitPrice = Number.parseFloat(item.unitPrice) || 0;
-                  const discount = Number.parseFloat(item.discount) || 0;
-                  const gross = quantity * unitPrice;
-                  const total = Math.max(0, gross - discount);
-
-                  return (
-                    <tr key={item.tempId} className="transition hover:bg-slate-50">
-                      <td className="px-4 py-3">
-                        <div className="font-medium text-slate-900">{item.medicineName}</div>
-                        <div className="text-xs text-slate-500">{item.medicineCode ?? ''}</div>
-                      </td>
-                      <td className="px-4 py-3">
-                        <input
-                          type="number"
-                          min="1"
-                          step="1"
-                          value={item.quantity}
-                          onChange={(event) => handleMedicineItemChange(item.tempId, 'quantity', event.target.value)}
-                          className="w-20 rounded-lg border border-slate-200 px-2 py-1 text-sm text-slate-900 shadow-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-200"
-                        />
-                      </td>
-                      <td className="px-4 py-3">
-                        <input
-                          type="number"
-                          min="0"
-                          step="0.01"
-                          value={item.unitPrice}
-                          onChange={(event) => handleMedicineItemChange(item.tempId, 'unitPrice', event.target.value)}
-                          className="w-28 rounded-lg border border-slate-200 px-2 py-1 text-sm text-slate-900 shadow-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-200"
-                        />
-                      </td>
-                      <td className="px-4 py-3">
-                        <input
-                          type="number"
-                          min="0"
-                          step="0.01"
-                          value={item.discount}
-                          onChange={(event) => handleMedicineItemChange(item.tempId, 'discount', event.target.value)}
-                          className="w-28 rounded-lg border border-slate-200 px-2 py-1 text-sm text-slate-900 shadow-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-200"
-                        />
-                      </td>
-                      <td className="px-4 py-3 font-semibold text-slate-900">{formatCurrency(total)}</td>
-                      <td className="px-4 py-3">
-                        <button
-                          type="button"
-                          onClick={() => handleRemoveMedicine(item.tempId)}
-                          className="rounded-lg border border-slate-200 px-3 py-1 text-xs font-semibold text-rose-600 shadow-sm transition hover:border-rose-200 hover:bg-rose-50"
-                        >
-                          Remove
-                        </button>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
           </div>
         </div>
 
