@@ -112,48 +112,60 @@ function buildInvoiceHtml(session) {
       }
       body {
         margin: 0;
-        padding: 14mm 12mm;
+        padding: 8mm 10mm;
         background: #ffffff;
         font-size: 11.5px;
       }
       .invoice {
         width: 100%;
-        min-height: calc(100% - 28mm);
+        min-height: calc(100% - 20mm);
         display: flex;
         flex-direction: column;
         gap: 18px;
+        position: relative;
+      }
+      .watermark {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        pointer-events: none;
+        opacity: 0.25;
+      }
+      .watermark img {
+        width: 78%;
+        max-width: 360px;
+        filter: saturate(0.85);
       }
       header {
         display: flex;
         justify-content: space-between;
         align-items: flex-start;
-        gap: 16px;
+        gap: 18px;
       }
       .brand {
         display: flex;
         align-items: center;
-        gap: 12px;
+        gap: 16px;
       }
       .brand img {
-        width: 56px;
-        height: 56px;
-        border-radius: 16px;
-        border: 1px solid #e2e8f0;
-        padding: 8px;
-        background: #ffffff;
-        box-shadow: 0 8px 16px rgba(15, 23, 42, 0.08);
+        width: 120px;
+        height: 120px;
+        border-radius: 28px;
+        box-shadow: 0 12px 28px rgba(15, 23, 42, 0.15);
       }
       .brand-text h1 {
-        font-size: 21px;
+        font-size: 24px;
         margin: 0;
-        letter-spacing: 0.08em;
+        letter-spacing: 0.14em;
         text-transform: uppercase;
         color: #0f172a;
       }
       .brand-text p {
-        margin: 2px 0 0;
+        margin: 8px 0 0;
         font-size: 11.5px;
-        color: #475569;
+        color: #4b5563;
       }
       .invoice-meta {
         text-align: right;
@@ -166,25 +178,25 @@ function buildInvoiceHtml(session) {
       }
       .info-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+        grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
         gap: 14px;
       }
       .card {
         border: 1px solid #e2e8f0;
-        border-radius: 10px;
-        padding: 12px 14px;
+        border-radius: 12px;
+        padding: 14px 16px;
         background: #f8fafc;
-        min-height: 96px;
+        min-height: 110px;
       }
       .card h3 {
         font-size: 11px;
         text-transform: uppercase;
         letter-spacing: 0.08em;
-        margin: 0 0 6px;
+        margin: 0 0 8px;
         color: #64748b;
       }
       .card p {
-        margin: 4px 0;
+        margin: 6px 0;
         font-size: 12.5px;
         font-weight: 600;
       }
@@ -208,26 +220,26 @@ function buildInvoiceHtml(session) {
         font-size: 12px;
         color: #1e293b;
       }
-      tr:last-child td {
-        border-bottom: none;
-      }
       tbody tr:nth-child(odd) td {
         background: #f8fafc;
       }
+      tr:last-child td {
+        border-bottom: none;
+      }
       .summary {
         margin-top: 12px;
-        padding: 12px 14px;
+        padding: 14px 18px;
         background: #f8fafc;
-        border-radius: 10px;
+        border-radius: 12px;
         border: 1px solid #e2e8f0;
         font-size: 12px;
-        width: 55%;
+        width: 60%;
         margin-left: auto;
       }
       .summary-row {
         display: flex;
         justify-content: space-between;
-        margin-bottom: 4px;
+        margin-bottom: 6px;
       }
       .summary-row:last-child {
         margin-bottom: 0;
@@ -236,10 +248,10 @@ function buildInvoiceHtml(session) {
       }
       .notes {
         margin-top: 12px;
-        padding: 12px 14px;
+        padding: 14px 16px;
         border-left: 3px solid #0ea5e9;
         background: #f0f9ff;
-        border-radius: 6px;
+        border-radius: 8px;
         font-size: 12px;
       }
       footer {
@@ -254,6 +266,7 @@ function buildInvoiceHtml(session) {
   </head>
   <body>
     <div class="invoice">
+      <div class="watermark"><img src="${logoSrc}" alt="Sri Ayurveda watermark" /></div>
       <header>
         <div class="brand">
           <img src="${logoSrc}" alt="Clinic Logo" />
