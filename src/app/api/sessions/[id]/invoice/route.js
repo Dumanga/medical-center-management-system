@@ -267,7 +267,7 @@ function buildInvoiceHtml(session) {
           <img src="${logoSrc}" alt="Clinic Logo" />
           <div class="brand-text">
             <h1>SRI AYURVEDA</h1>
-            <p>Billing Session Invoice</p>
+            <p>Invoice</p>
           </div>
         </div>
         <div class="invoice-meta">
@@ -279,7 +279,7 @@ function buildInvoiceHtml(session) {
       <section class="section">
         <div class="info-grid">
           <div class="card">
-            <h3>Invoice Details</h3>
+            <h3>Details</h3>
             <p>Session ID: #${session.id}</p>
             <p>Session Date: ${formattedDate}</p>
             <p>Created: ${createdDate}</p>
@@ -296,7 +296,6 @@ function buildInvoiceHtml(session) {
       </section>
 
       <section class="section">
-        <h3 style="font-size:12px;margin:0 0 6px;color:#0f172a;">Invoice Items</h3>
         <table>
           <thead>
             <tr>
