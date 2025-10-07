@@ -43,4 +43,5 @@
 - Added global stock valuation aggregate to surface current inventory cost throughout the Stocks API and dashboard card, renaming the KPI to "Current Stock Value."
 - Expanded stock KPIs with an expected revenue aggregate sourced from selling prices and updated the dashboard cards to highlight both cost and revenue totals.
 - Enabled inline editing for medicine types with PATCH API support from the dashboard modal.
+- Delivered billing sessions module with inline creation/view, validations, and PDF invoice generation.
 
