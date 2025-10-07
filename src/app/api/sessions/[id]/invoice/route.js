@@ -301,7 +301,6 @@ function buildInvoiceHtml(session) {
             <tr>
               <th>Item</th>
               <th>Type</th>
-              <th>Code</th>
               <th style="text-align:right;">Qty</th>
               <th style="text-align:right;">Unit Price</th>
               <th style="text-align:right;">Discount</th>
@@ -318,7 +317,6 @@ function buildInvoiceHtml(session) {
                         <tr>
                           <td>${item.name}</td>
                           <td style="color:#475569;">${item.type}</td>
-                          <td style="color:#475569;">${item.code || '—'}</td>
                           <td style="text-align:right;">${item.quantity}</td>
                           <td style="text-align:right;">${formatCurrency.format(item.unitPrice)}</td>
                           <td style="text-align:right;">${formatCurrency.format(item.discount)}</td>

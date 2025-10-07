@@ -49,3 +49,4 @@
 - Added medicine billing workflow with session medicine picker, inventory-backed modal, Prisma schema updates, and invoice/report integration.
 - Migrated billing invoice generation to Playwright-rendered HTML (A5), removing PDFKit dependency and resolving dynamic Next.js runtime issues.
 - Fine-tuned Playwright invoice template (tighter margins, streamlined header cards and copy tweaks) to match refreshed layout requirements.
+- Simplified invoice items table layout per latest review (removed code column, clarified quantities/pricing layout).
