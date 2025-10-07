@@ -65,7 +65,7 @@ model Session {
 
   patient Patient           @relation(fields: [patientId], references: [id], onDelete: Cascade)
   items   SessionTreatment[]
-  medicines SessionMedicine[]
+  medicineItems SessionMedicine[]
 }
 
 model SessionTreatment {
