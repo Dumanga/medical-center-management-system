@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import PDFDocument from 'pdfkit';
+import { createRequire } from 'module';
 import prisma from '@/lib/prisma';
 
 export const runtime = 'nodejs';
@@ -38,6 +39,11 @@ function safeNumber(value) {
   return Number.isFinite(numeric) ? numeric : 0;
 }
 
+const require = createRequire(import.meta.url);
+const helveticaFontPath = require.resolve('pdfkit/js/data/Helvetica.afm');
+const helveticaBoldFontPath = require.resolve('pdfkit/js/data/Helvetica-Bold.afm');
+const helveticaObliqueFontPath = require.resolve('pdfkit/js/data/Helvetica-Oblique.afm');
+
 async function buildInvoiceBuffer(session) {
   return new Promise((resolve, reject) => {
     const doc = new PDFDocument({ size: 'A5', margin: 36 });
@@ -46,6 +52,10 @@ async function buildInvoiceBuffer(session) {
     doc.on('data', (chunk) => chunks.push(chunk));
     doc.on('end', () => resolve(Buffer.concat(chunks)));
     doc.on('error', reject);
+
+    doc.registerFont('Helvetica', helveticaFontPath);
+    doc.registerFont('Helvetica-Bold', helveticaBoldFontPath);
+    doc.registerFont('Helvetica-Oblique', helveticaObliqueFontPath);
 
     const clinicName = 'Medical Center Management System';
     doc.fillColor('#0f172a').fontSize(22).font('Helvetica-Bold').text(clinicName);
@@ -249,6 +259,12 @@ export async function GET(request, { params }) {
     });
   } catch (error) {
     console.error(`Failed to generate invoice for session ${id}`, error);
-    return NextResponse.json({ message: 'Unable to generate invoice.' }, { status: 500 });
+    return NextResponse.json(
+      {
+        message: 'Unable to generate invoice.',
+        details: error instanceof Error ? error.message : 'Unknown error',
+      },
+      { status: 500 },
+    );
   }
 }
