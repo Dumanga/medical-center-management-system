@@ -72,6 +72,9 @@ function buildInvoiceHtml(session) {
   const formattedDate = session.date ? new Date(session.date).toLocaleDateString() : 'N/A';
   const createdDate = session.createdAt ? new Date(session.createdAt).toLocaleString() : 'N/A';
 
+  const baseURL = process.env.NEXT_PUBLIC_BASE_URL || '';
+  const logoSrc = `${baseURL}/invoice-logo.svg`;
+
   const head = `<!DOCTYPE html>
 <html lang="en">
   <head>
@@ -102,14 +105,30 @@ function buildInvoiceHtml(session) {
         align-items: flex-start;
         gap: 16px;
       }
-      .brand h1 {
-        font-size: 22px;
-        margin: 0;
-        letter-spacing: 0.02em;
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 12px;
       }
-      .brand p {
-        margin: 4px 0 0;
-        font-size: 12px;
+      .brand img {
+        width: 56px;
+        height: 56px;
+        border-radius: 16px;
+        border: 1px solid #e2e8f0;
+        padding: 8px;
+        background: #ffffff;
+        box-shadow: 0 8px 16px rgba(15, 23, 42, 0.08);
+      }
+      .brand-text h1 {
+        font-size: 21px;
+        margin: 0;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: #0f172a;
+      }
+      .brand-text p {
+        margin: 2px 0 0;
+        font-size: 11.5px;
         color: #475569;
       }
       .invoice-meta {
@@ -213,8 +232,11 @@ function buildInvoiceHtml(session) {
     <div class="invoice">
       <header>
         <div class="brand">
-          <h1>Medical Center Management System</h1>
-          <p>Billing Session Invoice</p>
+          <img src="${logoSrc}" alt="Clinic Logo" />
+          <div class="brand-text">
+            <h1>SRI AYURVEDA</h1>
+            <p>Billing Session Invoice</p>
+          </div>
         </div>
         <div class="invoice-meta">
           <div>Invoice #: ${session.id.toString().padStart(4, '0')}</div>
