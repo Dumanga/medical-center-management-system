@@ -147,12 +147,17 @@ export function validateSessionPayload(payload) {
   }
 
   const sessionDiscount = sessionDiscountResult.amount ?? 0;
+  const appointmentChargeResult = parseNonNegativeNumber(payload?.appointmentCharge ?? 2000, { allowNull: true });
+  if (appointmentChargeResult.error) {
+    errors.push(appointmentChargeResult.error);
+  }
+  const appointmentCharge = appointmentChargeResult.amount ?? 2000;
   const subtotal = treatmentsTotal + medicinesTotal;
   if (sessionDiscount > subtotal) {
     errors.push('Session discount cannot exceed item total.');
   }
 
-  const total = Math.max(0, subtotal - sessionDiscount);
+  const total = Math.max(0, subtotal - sessionDiscount + appointmentCharge);
 
   return {
     isValid: errors.length === 0,
@@ -162,6 +167,7 @@ export function validateSessionPayload(payload) {
       date: dateValue ? dateValue.toISOString() : null,
       description,
       discount: sessionDiscount,
+      appointmentCharge,
       total,
       items: normalizedTreatments,
       medicines: normalizedMedicines,

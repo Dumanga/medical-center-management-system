@@ -92,6 +92,7 @@ function serializeSession(session) {
 
   return {
     id: session.id,
+    appointmentCharge: decimalToNumber(session.appointmentCharge) ?? 0,
     isPaid: Boolean(session.isPaid),
     patient: session.patient
       ? {
@@ -173,7 +174,7 @@ export async function POST(request) {
       return NextResponse.json({ message: 'Validation failed.', errors: validation.errors }, { status: 400 });
     }
 
-    const { patientId, date, description, discount, total, items, medicines } = validation.values;
+    const { patientId, date, description, discount, appointmentCharge, total, items, medicines } = validation.values;
 
     const created = await prisma.session.create({
       data: {
@@ -181,6 +182,7 @@ export async function POST(request) {
         date: new Date(date ?? Date.now()),
         description: description || null,
         discount: discount ? new Prisma.Decimal(discount) : new Prisma.Decimal(0),
+        appointmentCharge: appointmentCharge ? new Prisma.Decimal(appointmentCharge) : new Prisma.Decimal(0),
         total: new Prisma.Decimal(total),
         items: {
           create: items.map((item) => ({

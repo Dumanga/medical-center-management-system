@@ -87,6 +87,7 @@ function buildInvoiceHtml(session) {
     .filter((item) => item.type === 'Medicine')
     .reduce((sum, item) => sum + item.total + item.discount, 0);
   const subtotal = treatmentSubtotal + medicineSubtotal;
+  const appointmentCharge = decimalToNumber(session.appointmentCharge) || 0;
 
   const formattedDate = session.date ? new Date(session.date).toLocaleDateString() : 'N/A';
   const createdDate = session.createdAt ? new Date(session.createdAt).toLocaleString() : 'N/A';
@@ -345,6 +346,11 @@ function buildInvoiceHtml(session) {
               : ''
           }
           <div class="summary-row"><span>Subtotal</span><span>${formatCurrency.format(subtotal)}</span></div>
+          ${
+            appointmentCharge > 0
+              ? `<div class=\"summary-row\"><span>Appointment Charges</span><span>${formatCurrency.format(appointmentCharge)}</span></div>`
+              : ''
+          }
           <div class="summary-row"><span>Session Discount</span><span>${formatCurrency.format(
             decimalToNumber(session.discount),
           )}</span></div>

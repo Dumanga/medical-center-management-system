@@ -31,6 +31,7 @@ const INITIAL_FORM = {
   date: TODAY_ISO,
   description: '',
   discount: '0.00',
+  appointmentCharge: '2000.00',
   items: [],
   medicineItems: [],
 };
@@ -92,6 +93,10 @@ function SessionSummary({ session }) {
       <div className="flex items-center justify-between">
         <span>Subtotal</span>
         <span className="font-semibold text-slate-900">{formatCurrency(subtotal)}</span>
+      </div>
+      <div className="flex items-center justify-between">
+        <span>Appointment Charges</span>
+        <span className="font-semibold text-slate-900">{formatCurrency(session.appointmentCharge ?? 0)}</span>
       </div>
       <div className="flex items-center justify-between">
         <span>Session Discount</span>
@@ -399,7 +404,8 @@ export default function SessionEditor({
   const sessionSubtotal = treatmentsSubtotal + medicinesSubtotal;
 
   const sessionDiscount = Number.parseFloat(form.discount) || 0;
-  const sessionTotal = Math.max(0, sessionSubtotal - sessionDiscount);
+  const appointmentCharge = Number.parseFloat(form.appointmentCharge || '2000') || 0;
+  const sessionTotal = Math.max(0, sessionSubtotal - sessionDiscount + appointmentCharge);
 
   const handleAppointmentSelect = useCallback(
     (appointmentId) => {
@@ -658,6 +664,7 @@ export default function SessionEditor({
         date: form.date ? new Date(form.date).toISOString() : new Date().toISOString(),
         description: form.description,
         discount: Number.parseFloat(form.discount || '0'),
+        appointmentCharge: appointmentCharge,
         items: form.items.map((item) => ({
           treatmentId: item.treatmentId,
           quantity: Number.parseInt(item.quantity, 10) || 0,
@@ -765,6 +772,15 @@ export default function SessionEditor({
               value={form.discount}
               onChange={(event) => setForm((previous) => ({ ...previous, discount: event.target.value }))}
               className="mt-2 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 shadow-sm focus:border-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-200"
+            />
+          </div>
+          <div>
+            <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">Appointment Charges</label>
+            <input
+              type="number"
+              readOnly
+              value={form.appointmentCharge}
+              className="mt-2 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-500 shadow-sm"
             />
           </div>
           <div className="lg:col-span-2">

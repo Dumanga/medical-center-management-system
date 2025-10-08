@@ -59,6 +59,7 @@ model Session {
   date        DateTime           @db.Date
   description String?            @db.Text
   discount    Decimal?           @db.Decimal(10, 2)
+  appointmentCharge Decimal?     @db.Decimal(10, 2)
   total       Decimal            @db.Decimal(10, 2)
   isPaid      Boolean            @default(false)
   createdAt   DateTime           @default(now())
