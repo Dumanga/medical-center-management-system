@@ -129,10 +129,6 @@ function SessionView({ session, onBack, onUpdated }) {
       }
       onUpdated?.(next);
       setSuccessOpen(true);
-      setTimeout(() => {
-        setSuccessOpen(false);
-        onBack?.();
-      }, 1200);
     } catch (error) {
       console.error('Mark paid failed', error);
       alert('Failed to update status to Paid.');
@@ -291,7 +287,7 @@ function SessionView({ session, onBack, onUpdated }) {
                 }}
                 className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow transition hover:bg-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-300"
               >
-                Back to Sessions
+                OK
               </button>
             </div>
           </div>
