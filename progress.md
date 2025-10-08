@@ -63,4 +63,5 @@
 - Relaxed patient phone validation: any phone format accepted; only required to be non-empty. Updated patient modal placeholder.
  - Added country code dropdown to patient create/edit (Tailwind Listbox) defaulting to Sri Lanka (+94); phone stored with selected dial code (e.g., +94XXXXXXXXX). No DB changes.
 - Country dropdown now loads full country list and dial codes from Rest Countries API on the client; falls back to Sri Lanka if offline.
- - Loyalty points: when marking a session as Paid, award points = total/100 rounded to 2dp (stored as cent-points in Int). Patients table now shows points with two decimals.
+- Loyalty points: when marking a session as Paid, award points = total/100 rounded to 2dp (stored as cent-points in Int). Patients table now shows points with two decimals.
+ - Seeded 10 sample patients via one-off script `scripts/seed-patients.js` for testing.
