@@ -107,6 +107,7 @@ function SessionSummary({ session }) {
 
 function SessionView({ session, onBack, onUpdated }) {
   const [isUpdating, setIsUpdating] = useState(false);
+  const [isSuccessOpen, setSuccessOpen] = useState(false);
 
   const handleMarkPaid = useCallback(async () => {
     if (!session?.id || session.isPaid) return;
@@ -127,6 +128,11 @@ function SessionView({ session, onBack, onUpdated }) {
         next.isPaid = true;
       }
       onUpdated?.(next);
+      setSuccessOpen(true);
+      setTimeout(() => {
+        setSuccessOpen(false);
+        onBack?.();
+      }, 1200);
     } catch (error) {
       console.error('Mark paid failed', error);
       alert('Failed to update status to Paid.');
@@ -262,6 +268,33 @@ function SessionView({ session, onBack, onUpdated }) {
         <div className="rounded-2xl border border-slate-100 bg-slate-50 px-5 py-4">
           <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500">Notes</h3>
           <p className="mt-2 text-sm text-slate-700">{session.description}</p>
+        </div>
+      ) : null}
+
+      {isSuccessOpen ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" />
+          <div className="relative w-full max-w-sm transform rounded-2xl bg-white p-6 shadow-2xl ring-1 ring-slate-100">
+            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-emerald-50 text-emerald-600 ring-1 ring-inset ring-emerald-200 animate-pulse">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-7 w-7">
+                <path fillRule="evenodd" d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12zm13.36-2.59a.75.75 0 10-1.22-.86l-3.41 4.83-1.77-1.77a.75.75 0 10-1.06 1.06l2.4 2.4c.32.32.84.27 1.09-.11l4.97-6.55z" clipRule="evenodd" />
+              </svg>
+            </div>
+            <h3 className="mt-4 text-center text-base font-semibold text-slate-900">Marked as Paid</h3>
+            <p className="mt-1 text-center text-sm text-slate-600">The session was updated successfully.</p>
+            <div className="mt-5 flex justify-center">
+              <button
+                type="button"
+                onClick={() => {
+                  setSuccessOpen(false);
+                  onBack?.();
+                }}
+                className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow transition hover:bg-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-300"
+              >
+                Back to Sessions
+              </button>
+            </div>
+          </div>
         </div>
       ) : null}
     </div>
