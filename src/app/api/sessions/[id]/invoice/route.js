@@ -447,6 +447,7 @@ export async function GET(request, { params }) {
       createdAt: session.createdAt?.toISOString?.() ?? null,
       description: session.description ?? '',
       discount: decimalToNumber(session.discount) ?? 0,
+      appointmentCharge: decimalToNumber(session.appointmentCharge) ?? 0,
       total: decimalToNumber(session.total) ?? 0,
       items: session.items,
       medicineItems: session.medicineItems,
