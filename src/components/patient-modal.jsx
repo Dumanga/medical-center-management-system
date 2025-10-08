@@ -15,23 +15,51 @@ export default function PatientModal({ isOpen, onClose, onSuccess, initialPatien
   const [errors, setErrors] = useState([]);
   const [isSubmitting, setSubmitting] = useState(false);
 
-  const countries = useMemo(
-    () => [
-      { code: 'LK', name: 'Sri Lanka', dialCode: '+94', flag: '🇱🇰' },
-      { code: 'IN', name: 'India', dialCode: '+91', flag: '🇮🇳' },
-      { code: 'US', name: 'United States', dialCode: '+1', flag: '🇺🇸' },
-      { code: 'GB', name: 'United Kingdom', dialCode: '+44', flag: '🇬🇧' },
-      { code: 'AU', name: 'Australia', dialCode: '+61', flag: '🇦🇺' },
-      { code: 'CA', name: 'Canada', dialCode: '+1', flag: '🇨🇦' },
-      { code: 'SG', name: 'Singapore', dialCode: '+65', flag: '🇸🇬' },
-      { code: 'AE', name: 'United Arab Emirates', dialCode: '+971', flag: '🇦🇪' },
-      { code: 'DE', name: 'Germany', dialCode: '+49', flag: '🇩🇪' },
-      { code: 'JP', name: 'Japan', dialCode: '+81', flag: '🇯🇵' },
-    ],
-    [],
-  );
+  const [countries, setCountries] = useState([
+    { code: 'LK', name: 'Sri Lanka', dialCode: '+94', flag: '🇱🇰' },
+  ]);
+  const [selectedCountry, setSelectedCountry] = useState({ code: 'LK', name: 'Sri Lanka', dialCode: '+94', flag: '🇱🇰' }); // Default LK
 
-  const [selectedCountry, setSelectedCountry] = useState(countries[0]); // Default to Sri Lanka
+  // Load full country list (dial codes) from Rest Countries API
+  useEffect(() => {
+    let cancelled = false;
+    async function loadCountries() {
+      try {
+        const res = await fetch('https://restcountries.com/v3.1/all?fields=name,cca2,idd,flag');
+        if (!res.ok) throw new Error('Failed to load countries');
+        const data = await res.json();
+        const mapped = data
+          .map((c) => {
+            const code = c.cca2 || '';
+            const name = c?.name?.common || code || 'Unknown';
+            const root = c?.idd?.root || '';
+            const suffixes = Array.isArray(c?.idd?.suffixes) ? c.idd.suffixes : [];
+            const dial = root && suffixes.length > 0 ? `${root}${suffixes[0]}` : root || '';
+            const flag = c?.flag || '';
+            if (!dial) return null;
+            return { code, name, dialCode: dial, flag };
+          })
+          .filter(Boolean)
+          .sort((a, b) => a.name.localeCompare(b.name));
+        if (!cancelled && mapped.length > 0) {
+          setCountries(mapped);
+          // Keep selection if it exists in new list, else LK -> first match
+          const nextSel = mapped.find((m) => m.code === 'LK') || mapped[0];
+          setSelectedCountry((prev) => {
+            if (!prev) return nextSel;
+            const match = mapped.find((m) => m.code === prev.code) || mapped.find((m) => m.dialCode === prev.dialCode);
+            return match || nextSel;
+          });
+        }
+      } catch (e) {
+        // Fallback stays with minimal list; no hard failure
+      }
+    }
+    loadCountries();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const isEditing = useMemo(() => Boolean(initialPatient?.id), [initialPatient?.id]);
 
@@ -47,7 +75,7 @@ export default function PatientModal({ isOpen, onClose, onSuccess, initialPatien
     if (initialPatient) {
       const fullPhone = initialPatient.phone ?? '';
       // Try to infer country from stored phone starting with +code
-      let picked = countries[0];
+      let picked = countries.find((c) => c.code === 'LK') || countries[0];
       let local = fullPhone;
       if (typeof fullPhone === 'string' && fullPhone.startsWith('+')) {
         // Choose the longest matching dial code
@@ -69,7 +97,7 @@ export default function PatientModal({ isOpen, onClose, onSuccess, initialPatien
       });
     } else {
       setForm(INITIAL_FORM);
-      setSelectedCountry(countries[0]);
+      setSelectedCountry(countries.find((c) => c.code === 'LK') || countries[0]);
     }
     setErrors([]);
   }, [initialPatient, isOpen, countries]);

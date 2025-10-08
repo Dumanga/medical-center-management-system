@@ -62,3 +62,4 @@
 - Added Tailwind-styled success popup on "Mark as Paid"; requires clicking OK to return to the list (no auto-close) for clearer UX confirmation.
 - Relaxed patient phone validation: any phone format accepted; only required to be non-empty. Updated patient modal placeholder.
  - Added country code dropdown to patient create/edit (Tailwind Listbox) defaulting to Sri Lanka (+94); phone stored with selected dial code (e.g., +94XXXXXXXXX). No DB changes.
+ - Country dropdown now loads full country list and dial codes from Rest Countries API on the client; falls back to Sri Lanka if offline.
