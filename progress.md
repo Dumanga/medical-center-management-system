@@ -59,6 +59,7 @@
 - Exposed `PATCH /api/sessions/[id]` to update `isPaid`.
 - Updated sessions list to show a Status column (Paid / Payment Pending).
 - Added "Mark as Paid" action in session view to set status to Paid.
+ - Session create summary now shows Appointment Charges in the totals box (before Total) and invoice summary includes it too.
 - Added Tailwind-styled success popup on "Mark as Paid"; requires clicking OK to return to the list (no auto-close) for clearer UX confirmation.
 - Relaxed patient phone validation: any phone format accepted; only required to be non-empty. Updated patient modal placeholder.
  - Added country code dropdown to patient create/edit (Tailwind Listbox) defaulting to Sri Lanka (+94); phone stored with selected dial code (e.g., +94XXXXXXXXX). No DB changes.

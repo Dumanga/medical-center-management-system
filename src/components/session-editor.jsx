@@ -944,6 +944,10 @@ export default function SessionEditor({
               <span className="font-semibold text-slate-900">{formatCurrency(sessionSubtotal)}</span>
             </div>
             <div className="flex w-full max-w-sm items-center justify-between">
+              <span>Appointment Charges</span>
+              <span className="font-semibold text-slate-900">{formatCurrency(appointmentCharge)}</span>
+            </div>
+            <div className="flex w-full max-w-sm items-center justify-between">
               <span>Session Discount</span>
               <span className="font-semibold text-slate-900">{formatCurrency(sessionDiscount)}</span>
             </div>
