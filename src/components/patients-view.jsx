@@ -206,7 +206,7 @@ export default function PatientsView({ initialData, initialMeta }) {
                   <td className="px-4 py-3 font-mono text-xs text-slate-500">#{patient.id}</td>
                   <td className="px-4 py-3 font-medium text-slate-900">{patient.name}</td>
                   <td className="px-4 py-3">{patient.phone}</td>
-                  <td className="px-4 py-3 text-slate-500">{patient.loyaltyPoints ?? 0}</td>
+                  <td className="px-4 py-3 text-slate-500">{(Number(patient.loyaltyPoints ?? 0) / 100).toFixed(2)}</td>
                   <td className="px-4 py-3 text-slate-500">{patient.email ?? '--'}</td>
                   <td className="px-4 py-3 text-slate-500">{patient.address ?? '--'}</td>
                   <td className="px-4 py-3">

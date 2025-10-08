@@ -106,8 +106,25 @@ export async function PATCH(_request, { params }) {
       return NextResponse.json({ message: 'Session not found.' }, { status: 404 });
     }
 
-    // Temporary workaround: update using raw SQL to avoid Prisma Client generation lock
+    // Award loyalty points only when transitioning from unpaid -> paid
+    let pointsCentsToAdd = 0;
+    if (isPaid === true && existing.isPaid !== true) {
+      const totalNumber = decimalToNumber(existing.total) ?? 0;
+      // points = round((total / 100), 2). Store as cents to keep precision in Int column
+      // This simplifies to rounding the total currency amount to nearest integer for cent-points storage
+      pointsCentsToAdd = Math.round(totalNumber);
+    }
+
+    // Update session isPaid flag
     await prisma.$executeRawUnsafe('UPDATE `Session` SET `isPaid` = ? WHERE `id` = ? LIMIT 1', isPaid ? 1 : 0, id);
+
+    // Increment patient loyalty points (stored as integer cent-points)
+    if (pointsCentsToAdd > 0 && existing.patientId) {
+      await prisma.patient.update({
+        where: { id: existing.patientId },
+        data: { loyaltyPoints: { increment: pointsCentsToAdd } },
+      });
+    }
 
     // Re-fetch related data for response (Prisma client might not expose isPaid yet)
     const refreshed = await prisma.session.findUnique({
