@@ -92,6 +92,7 @@ function serializeSession(session) {
 
   return {
     id: session.id,
+    isPaid: Boolean(session.isPaid),
     patient: session.patient
       ? {
           id: session.patient.id,

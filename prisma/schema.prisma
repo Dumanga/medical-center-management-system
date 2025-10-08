@@ -60,6 +60,7 @@ model Session {
   description String?            @db.Text
   discount    Decimal?           @db.Decimal(10, 2)
   total       Decimal            @db.Decimal(10, 2)
+  isPaid      Boolean            @default(false)
   createdAt   DateTime           @default(now())
   updatedAt   DateTime           @updatedAt
 

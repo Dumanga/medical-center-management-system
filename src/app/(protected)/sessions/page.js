@@ -36,6 +36,7 @@ function decimalToNumber(value) {
 function serializeSession(session) {
   return {
     id: session.id,
+    isPaid: Boolean(session.isPaid),
     patientId: session.patientId,
     patient: session.patient
       ? {

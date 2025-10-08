@@ -131,6 +131,12 @@ export default function SessionsView({
     [],
   );
 
+  const handleViewUpdated = useCallback((updated) => {
+    if (!updated) return;
+    setActiveSession(updated);
+    setSessions((prev) => prev.map((s) => (s.id === updated.id ? { ...s, ...updated } : s)));
+  }, []);
+
   const handleCreateClick = useCallback(() => {
     setMode('create');
   }, []);
@@ -283,6 +289,7 @@ export default function SessionsView({
               <tr>
                 <th className="px-4 py-3">Session</th>
                 <th className="px-4 py-3">Patient</th>
+                <th className="px-4 py-3">Status</th>
                 <th className="px-4 py-3">Treatments</th>
                 <th className="px-4 py-3">Discount</th>
                 <th className="px-4 py-3">Total</th>
@@ -293,7 +300,7 @@ export default function SessionsView({
             <tbody className="divide-y divide-slate-100 text-sm text-slate-700">
               {sessions.length === 0 && !isLoading ? (
                 <tr>
-                  <td colSpan={7} className="px-4 py-6 text-center text-slate-500">
+                  <td colSpan={8} className="px-4 py-6 text-center text-slate-500">
                     No billing sessions recorded yet. Create a session to generate your first invoice.
                   </td>
                 </tr>
@@ -309,6 +316,17 @@ export default function SessionsView({
                   <td className="px-4 py-3">
                     <div className="font-medium text-slate-900">{session.patient?.name ?? 'Unknown patient'}</div>
                     <div className="text-xs text-slate-500">{session.patient?.phone ?? '--'}</div>
+                  </td>
+                  <td className="px-4 py-3">
+                    {session.isPaid ? (
+                      <span className="inline-flex items-center rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-semibold text-emerald-700 ring-1 ring-inset ring-emerald-200">
+                        Paid
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center rounded-full bg-amber-50 px-2.5 py-0.5 text-xs font-semibold text-amber-700 ring-1 ring-inset ring-amber-200">
+                        Payment Pending
+                      </span>
+                    )}
                   </td>
                   <td className="px-4 py-3 text-slate-500">
                     {(session.items?.length ?? 0) + (session.medicineItems?.length ?? 0)} items
@@ -395,6 +413,7 @@ export default function SessionsView({
       medicineTypes={currentMedicineTypes}
       appointments={currentAppointments}
       onCancel={handleCancelEditor}
+      onUpdated={handleViewUpdated}
     />
   );
 

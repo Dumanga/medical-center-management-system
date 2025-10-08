@@ -105,7 +105,30 @@ function SessionSummary({ session }) {
   );
 }
 
-function SessionView({ session, onBack }) {
+function SessionView({ session, onBack, onUpdated }) {
+  const [isUpdating, setIsUpdating] = useState(false);
+
+  const handleMarkPaid = useCallback(async () => {
+    if (!session?.id || session.isPaid) return;
+    try {
+      setIsUpdating(true);
+      const response = await fetch(`/api/sessions/${session.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ isPaid: true }),
+      });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(payload.message || 'Unable to update session.');
+      }
+      onUpdated?.(payload.data);
+    } catch (error) {
+      console.error('Mark paid failed', error);
+      alert('Failed to update status to Paid.');
+    } finally {
+      setIsUpdating(false);
+    }
+  }, [session?.id, session?.isPaid, onUpdated]);
   const lineItems = useMemo(() => {
     const treatmentLines = (session.items ?? []).map((item) => ({
       id: item.id,
@@ -142,6 +165,27 @@ function SessionView({ session, onBack }) {
           </p>
         </div>
         <div className="flex gap-2">
+          <div className="mr-2 hidden sm:flex">
+            {session.isPaid ? (
+              <span className="inline-flex items-center rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700 ring-1 ring-inset ring-emerald-200">
+                Paid
+              </span>
+            ) : (
+              <span className="inline-flex items-center rounded-full bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-700 ring-1 ring-inset ring-amber-200">
+                Payment Pending
+              </span>
+            )}
+          </div>
+          {!session.isPaid ? (
+            <button
+              type="button"
+              onClick={handleMarkPaid}
+              disabled={isUpdating}
+              className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-500 disabled:cursor-not-allowed disabled:bg-slate-400"
+            >
+              {isUpdating ? 'Updating...' : 'Mark as Paid'}
+            </button>
+          ) : null}
           <button
             type="button"
             onClick={() => window.open(`/api/sessions/${session.id}/invoice`, '_blank', 'noopener')}
@@ -229,6 +273,7 @@ export default function SessionEditor({
   appointments,
   onCancel,
   onSuccess,
+  onUpdated,
 }) {
   const [form, setForm] = useState({ ...INITIAL_FORM, date: TODAY_ISO });
   const [submitErrors, setSubmitErrors] = useState([]);
@@ -620,7 +665,13 @@ export default function SessionEditor({
   );
 
   if (mode === 'view' && session) {
-    return <SessionView session={session} onBack={onCancel} />;
+    return (
+      <SessionView
+        session={session}
+        onBack={onCancel}
+        onUpdated={onUpdated}
+      />
+    );
   }
 
   return (
