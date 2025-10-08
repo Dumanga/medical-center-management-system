@@ -1,8 +1,8 @@
-﻿export function normalizePhone(value) {
+export function normalizePhone(value) {
   if (typeof value !== 'string') {
     return '';
   }
-  return value.replace(/\D/g, '').trim();
+  return value.trim();
 }
 
 export function validatePatientPayload(payload) {
@@ -20,8 +20,6 @@ export function validatePatientPayload(payload) {
 
   if (!phone) {
     errors.push('Phone number is required.');
-  } else if (!/^0\d{9}$/.test(phone)) {
-    errors.push('Phone number must be a valid Sri Lankan 10 digit number.');
   }
 
   if (email) {
@@ -42,3 +40,4 @@ export function validatePatientPayload(payload) {
     },
   };
 }
+
