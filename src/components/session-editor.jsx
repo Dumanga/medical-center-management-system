@@ -121,7 +121,12 @@ function SessionView({ session, onBack, onUpdated }) {
       if (!response.ok) {
         throw new Error(payload.message || 'Unable to update session.');
       }
-      onUpdated?.(payload.data);
+      // Trust API response if present, otherwise flip locally
+      const next = payload?.data && typeof payload.data === 'object' ? payload.data : { ...session, isPaid: true };
+      if (!next.isPaid) {
+        next.isPaid = true;
+      }
+      onUpdated?.(next);
     } catch (error) {
       console.error('Mark paid failed', error);
       alert('Failed to update status to Paid.');

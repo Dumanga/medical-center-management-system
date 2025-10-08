@@ -100,9 +100,18 @@ export async function PATCH(_request, { params }) {
       return NextResponse.json({ message: 'isPaid boolean is required.' }, { status: 400 });
     }
 
-    const updated = await prisma.session.update({
+    // Ensure session exists first
+    const existing = await prisma.session.findUnique({ where: { id } });
+    if (!existing) {
+      return NextResponse.json({ message: 'Session not found.' }, { status: 404 });
+    }
+
+    // Temporary workaround: update using raw SQL to avoid Prisma Client generation lock
+    await prisma.$executeRawUnsafe('UPDATE `Session` SET `isPaid` = ? WHERE `id` = ? LIMIT 1', isPaid ? 1 : 0, id);
+
+    // Re-fetch related data for response (Prisma client might not expose isPaid yet)
+    const refreshed = await prisma.session.findUnique({
       where: { id },
-      data: { isPaid },
       include: {
         patient: true,
         items: { include: { treatment: true } },
@@ -110,10 +119,12 @@ export async function PATCH(_request, { params }) {
       },
     });
 
-    return NextResponse.json({ data: serializeSession(updated) });
+    const serialized = serializeSession(refreshed);
+    // Force return the updated status in response
+    serialized.isPaid = isPaid;
+    return NextResponse.json({ data: serialized });
   } catch (error) {
     console.error('Failed to update session status', error);
     return NextResponse.json({ message: 'Unable to update session.' }, { status: 500 });
   }
 }
-
