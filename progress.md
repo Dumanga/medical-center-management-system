@@ -59,4 +59,5 @@
 - Exposed `PATCH /api/sessions/[id]` to update `isPaid`.
 - Updated sessions list to show a Status column (Paid / Payment Pending).
 - Added "Mark as Paid" action in session view to set status to Paid.
- - Added Tailwind-styled success popup on "Mark as Paid"; requires clicking OK to return to the list (no auto-close) for clearer UX confirmation.
+- Added Tailwind-styled success popup on "Mark as Paid"; requires clicking OK to return to the list (no auto-close) for clearer UX confirmation.
+ - Relaxed patient phone validation: any phone format accepted; only required to be non-empty. Updated patient modal placeholder.
