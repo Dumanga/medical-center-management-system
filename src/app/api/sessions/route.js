@@ -181,7 +181,6 @@ export async function POST(request) {
         description: description || null,
         discount: discount ? new Prisma.Decimal(discount) : new Prisma.Decimal(0),
         total: new Prisma.Decimal(total),
-        status: 'PENDING',
         items: {
           create: items.map((item) => ({
             treatmentId: item.treatmentId,

@@ -35,17 +35,7 @@ const INITIAL_FORM = {
   medicineItems: [],
 };
 
-const DEFAULT_APPOINTMENT_CHARGE = {
-  treatmentId: 'static:appointment-charge',
-  treatmentName: 'Appointment Charges',
-  treatmentCode: 'APPT-FEE',
-  quantity: '1',
-  unitPrice: '2000.00',
-  discount: '0.00',
-  total: 2000,
-  tempId: 'appointment-charge',
-  isLocked: true,
-};
+// Removed previously added default "Appointment Charges" line item.
 
 let tempId = 0;
 
@@ -253,7 +243,7 @@ export default function SessionEditor({
 
   useEffect(() => {
     if (mode === 'create') {
-      setForm({ ...INITIAL_FORM, date: TODAY_ISO, items: [DEFAULT_APPOINTMENT_CHARGE] });
+      setForm({ ...INITIAL_FORM, date: TODAY_ISO });
       setSubmitErrors([]);
       setSubmitting(false);
     }

@@ -50,3 +50,8 @@
 - Migrated billing invoice generation to Playwright-rendered HTML (A5), removing PDFKit dependency and resolving dynamic Next.js runtime issues.
 - Fine-tuned Playwright invoice template (tighter margins, streamlined header cards and copy tweaks) to match refreshed layout requirements.
 - Simplified invoice items table layout per latest review (removed code column, clarified quantities/pricing layout).
+
+## 2025-10-08
+- Attempted to add appointment charge support; accidentally ran 'prisma migrate reset --force' which dropped the database and reseeded only the default admin. All previously entered data was lost. Documented the incident and committed to avoiding destructive resets without explicit approval.
+- Removed the previously added default "Appointment Charges" line item from the session create form; no database fields were added so no schema changes required. Verified session creation flow without the extra row.
+ - Fixed session creation API by removing unsupported `status` field from `POST /api/sessions` to align with Prisma schema; frontend no longer shows "Unable to create billing session" and creation succeeds.
