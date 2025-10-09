@@ -134,16 +134,26 @@ async function loadInitialData(searchParamsPromise) {
     prisma.treatment.findMany({
       orderBy: [{ name: 'asc' }],
     }),
-    prisma.appointment.findMany({
-      where: {
-        status: 'PENDING',
-      },
-      orderBy: [{ date: 'asc' }, { time: 'asc' }],
-      take: 100,
-      include: {
-        patient: true,
-      },
-    }),
+    (async () => {
+      const now = new Date();
+      const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      const endOfDay = new Date(startOfDay);
+      endOfDay.setDate(endOfDay.getDate() + 1);
+      return prisma.appointment.findMany({
+        where: {
+          status: 'PENDING',
+          date: {
+            gte: startOfDay,
+            lt: endOfDay,
+          },
+        },
+        orderBy: [{ date: 'asc' }, { time: 'asc' }],
+        take: 100,
+        include: {
+          patient: true,
+        },
+      });
+    })(),
     prisma.medicineStock.findMany({
       orderBy: [{ name: 'asc' }],
       include: {
