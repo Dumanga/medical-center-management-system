@@ -218,6 +218,8 @@ export async function POST(request) {
       },
     });
 
+    // Note: No automatic appointment status updates on session creation
+
     return NextResponse.json({ data: serializeSession(created) }, { status: 201 });
   } catch (error) {
     console.error('Failed to create billing session', error);
