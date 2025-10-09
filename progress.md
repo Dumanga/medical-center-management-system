@@ -79,3 +79,4 @@
 - Session create form: appointment dropdown now shows only today’s appointments (status PENDING).
 - When creating a session for an appointment, mark that appointment as COMPLETED (best effort update).
 - Fix: session medicine picker now shows accurate stock quantity by serializing numeric quantity from server (avoids undefined -> 0).
+- Fix: session appointment picker refresh now requests only today’s PENDING appointments via /api/appointments?status=PENDING&date=YYYY-MM-DD; API now supports status filter.

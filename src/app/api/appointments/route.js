@@ -43,6 +43,10 @@ export async function GET(request) {
     const { searchParams } = request.nextUrl;
     const { page, pageSize } = parsePagination(searchParams);
     const query = searchParams.get('query')?.trim() ?? '';
+    const statusParamRaw = searchParams.get('status');
+    const statusParam = typeof statusParamRaw === 'string' && statusParamRaw.trim()
+      ? statusParamRaw.trim().toUpperCase()
+      : null;
 
     const dateParam = parseDateParam(searchParams.get('date'));
     if (!dateParam.ok) {
@@ -80,6 +84,10 @@ export async function GET(request) {
       if (toParam.value) {
         filters.push({ date: { lte: toParam.value } });
       }
+    }
+
+    if (statusParam) {
+      filters.push({ status: statusParam });
     }
 
     const where = filters.length > 0 ? { AND: filters } : undefined;

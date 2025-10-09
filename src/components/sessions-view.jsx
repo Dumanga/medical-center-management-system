@@ -180,7 +180,12 @@ export default function SessionsView({
 
   const handleFetchAppointments = useCallback(async () => {
     try {
-      const response = await fetch('/api/appointments?page=1&pageSize=100&status=PENDING', { cache: 'no-store' });
+      const today = new Date();
+      const yyyy = today.getFullYear();
+      const mm = String(today.getMonth() + 1).padStart(2, '0');
+      const dd = String(today.getDate()).padStart(2, '0');
+      const dateParam = `${yyyy}-${mm}-${dd}`;
+      const response = await fetch(`/api/appointments?page=1&pageSize=100&status=PENDING&date=${dateParam}`, { cache: 'no-store' });
       if (!response.ok) {
         return;
       }
