@@ -1,4 +1,4 @@
-﻿# Progress Log
+# Progress Log
 
 ## 2025-10-06
 - Initialized Next.js app with Tailwind CSS and ESLint configuration using create-next-app.
@@ -66,3 +66,9 @@
 - Country dropdown now loads full country list and dial codes from Rest Countries API on the client; falls back to Sri Lanka if offline.
 - Loyalty points: when marking a session as Paid, award points = total/100 rounded to 2dp (stored as cent-points in Int). Patients table now shows points with two decimals.
  - Seeded 10 sample patients via one-off script `scripts/seed-patients.js` for testing.
+
+## 2025-10-09
+- Removed Subtotal from billing session UI summaries; kept Treatments, Medicines, Appointment Charges, Session Discount, and Total.
+- Updated invoice PDF summary to remove Subtotal and relabel category lines (Treatment Subtotal ? Treatments, Medicine Subtotal ? Medicines) while keeping Total Due intact.
+- No calculation changes; only display adjustments. Verified no schema or API changes required.
+

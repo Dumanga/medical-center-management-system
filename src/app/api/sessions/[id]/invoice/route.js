@@ -333,19 +333,19 @@ function buildInvoiceHtml(session) {
         <div class="summary">
           ${
             treatmentSubtotal > 0
-              ? `<div class="summary-row"><span>Treatment Subtotal</span><span>${formatCurrency.format(
+              ? `<div class="summary-row"><span>Treatments</span><span>${formatCurrency.format(
                   treatmentSubtotal,
                 )}</span></div>`
               : ''
           }
           ${
             medicineSubtotal > 0
-              ? `<div class="summary-row"><span>Medicine Subtotal</span><span>${formatCurrency.format(
+              ? `<div class="summary-row"><span>Medicines</span><span>${formatCurrency.format(
                   medicineSubtotal,
                 )}</span></div>`
               : ''
           }
-          <div class="summary-row"><span>Subtotal</span><span>${formatCurrency.format(subtotal)}</span></div>
+          
           ${
             appointmentCharge > 0
               ? `<div class=\"summary-row\"><span>Appointment Charges</span><span>${formatCurrency.format(appointmentCharge)}</span></div>`

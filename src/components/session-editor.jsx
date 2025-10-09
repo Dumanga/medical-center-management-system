@@ -90,10 +90,7 @@ function SessionSummary({ session }) {
           <span className="font-semibold text-slate-900">{formatCurrency(medicineSubtotal)}</span>
         </div>
       ) : null}
-      <div className="flex items-center justify-between">
-        <span>Subtotal</span>
-        <span className="font-semibold text-slate-900">{formatCurrency(subtotal)}</span>
-      </div>
+      {/* Subtotal removed as only Total is required */}
       <div className="flex items-center justify-between">
         <span>Appointment Charges</span>
         <span className="font-semibold text-slate-900">{formatCurrency(session.appointmentCharge ?? 0)}</span>
@@ -939,10 +936,7 @@ export default function SessionEditor({
                 <span className="font-semibold text-slate-900">{formatCurrency(medicinesSubtotal)}</span>
               </div>
             ) : null}
-            <div className="flex w-full max-w-sm items-center justify-between">
-              <span>Subtotal</span>
-              <span className="font-semibold text-slate-900">{formatCurrency(sessionSubtotal)}</span>
-            </div>
+            {/* Subtotal removed as only Total is required */}
             <div className="flex w-full max-w-sm items-center justify-between">
               <span>Appointment Charges</span>
               <span className="font-semibold text-slate-900">{formatCurrency(appointmentCharge)}</span>
