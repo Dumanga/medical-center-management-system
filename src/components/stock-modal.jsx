@@ -20,6 +20,17 @@ export default function StockModal({ isOpen, onClose, onSuccess, initialStock, m
   const isEditing = useMemo(() => Boolean(initialStock?.id), [initialStock?.id]);
   const hasTypes = Array.isArray(medicineTypes) && medicineTypes.length > 0;
 
+  const getStatus = useCallback((quantity) => {
+    const q = Number(quantity) || 0;
+    if (q <= 10) {
+      return { label: 'Low', bg: 'bg-rose-50', text: 'text-rose-700', ring: 'ring-rose-200' };
+    }
+    if (q <= 20) {
+      return { label: 'Medium', bg: 'bg-amber-50', text: 'text-amber-700', ring: 'ring-amber-200' };
+    }
+    return { label: 'Good', bg: 'bg-emerald-50', text: 'text-emerald-700', ring: 'ring-emerald-200' };
+  }, []);
+
   const typeOptions = useMemo(
     () => medicineTypes.map((type) => ({ value: String(type.id), label: type.name })),
     [medicineTypes],
@@ -200,6 +211,18 @@ export default function StockModal({ isOpen, onClose, onSuccess, initialStock, m
               className="mt-2 w-full rounded-lg border border-slate-200 px-4 py-2 text-sm text-slate-900 shadow-sm focus:border-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-200"
               placeholder="e.g. 40"
             />
+            {form.quantity !== '' ? (
+              <div className="mt-2">
+                {(() => {
+                  const s = getStatus(form.quantity);
+                  return (
+                    <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1 ring-inset ${s.bg} ${s.text} ${s.ring}`}>
+                      {s.label}
+                    </span>
+                  );
+                })()}
+              </div>
+            ) : null}
           </div>
 
           <div className="sm:col-span-1">

@@ -73,3 +73,4 @@
 - No calculation changes; only display adjustments. Verified no schema or API changes required.
 
 - Removed 'Treatments' column from Billing Sessions listing table; simplified columns to Session, Patient, Status, Discount, Total, Created, Action.
+- Stocks: added computed Status (Low/Medium/Good) column based on quantity (frontend-only); shows badge in list and preview in add/edit modal.

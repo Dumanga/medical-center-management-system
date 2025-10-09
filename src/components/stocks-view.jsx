@@ -229,6 +229,17 @@ export default function StocksView({ initialData, initialMeta, initialTypes }) {
 
   const hasTypes = totalTypes > 0;
 
+  const getStatus = useCallback((quantity) => {
+    const q = Number(quantity) || 0;
+    if (q <= 10) {
+      return { label: 'Low', bg: 'bg-rose-50', text: 'text-rose-700', ring: 'ring-rose-200' };
+    }
+    if (q <= 20) {
+      return { label: 'Medium', bg: 'bg-amber-50', text: 'text-amber-700', ring: 'ring-amber-200' };
+    }
+    return { label: 'Good', bg: 'bg-emerald-50', text: 'text-emerald-700', ring: 'ring-emerald-200' };
+  }, []);
+
   return (
     <section className="space-y-6">
       <header className="flex flex-col gap-4 rounded-2xl border border-slate-100 bg-white p-6 shadow-sm sm:flex-row sm:items-center sm:justify-between">
@@ -319,6 +330,7 @@ export default function StocksView({ initialData, initialMeta, initialTypes }) {
                 <th scope="col" className="px-4 py-3">Medicine</th>
                 <th scope="col" className="px-4 py-3">Type</th>
                 <th scope="col" className="px-4 py-3">Quantity</th>
+                <th scope="col" className="px-4 py-3">Status</th>
                 <th scope="col" className="px-4 py-3">Incoming Price</th>
                 <th scope="col" className="px-4 py-3">Selling Price</th>
                 <th scope="col" className="px-4 py-3">Updated</th>
@@ -328,7 +340,7 @@ export default function StocksView({ initialData, initialMeta, initialTypes }) {
             <tbody className="divide-y divide-slate-100 text-sm text-slate-700">
               {stocks.length === 0 && !isLoading ? (
                 <tr>
-                  <td colSpan={8} className="px-4 py-6 text-center text-slate-500">
+                  <td colSpan={9} className="px-4 py-6 text-center text-slate-500">
                     No stock records found. {hasTypes ? 'Add a stock item to get started.' : 'Create a medicine type to begin tracking stock.'}
                   </td>
                 </tr>
@@ -339,6 +351,16 @@ export default function StocksView({ initialData, initialMeta, initialTypes }) {
                   <td className="px-4 py-3 font-medium text-slate-900">{stock.name}</td>
                   <td className="px-4 py-3 text-slate-500">{stock.type?.name ?? '--'}</td>
                   <td className="px-4 py-3">{stock.quantity}</td>
+                  <td className="px-4 py-3">
+                    {(() => {
+                      const s = getStatus(stock.quantity);
+                      return (
+                        <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1 ring-inset ${s.bg} ${s.text} ${s.ring}`}>
+                          {s.label}
+                        </span>
+                      );
+                    })()}
+                  </td>
                   <td className="px-4 py-3 text-slate-500">{formatCurrency(stock.incomingPrice)}</td>
                   <td className="px-4 py-3 text-slate-500">{formatCurrency(stock.sellingPrice)}</td>
                   <td className="px-4 py-3 text-slate-500">
