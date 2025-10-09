@@ -1,5 +1,33 @@
 import prisma from '@/lib/prisma';
 
+function normalizeStatus(value) {
+  return (value ?? 'PENDING').toUpperCase();
+}
+
+function getStatusClasses(status) {
+  const normalized = normalizeStatus(status);
+  switch (normalized) {
+    case 'CONFIRMED':
+      return 'bg-emerald-100 text-emerald-700';
+    case 'CANCELLED':
+      return 'bg-rose-100 text-rose-700';
+    case 'COMPLETED':
+      return 'bg-blue-100 text-blue-700';
+    default:
+      return 'bg-amber-100 text-amber-700';
+  }
+}
+
+function formatStatusLabel(status) {
+  const normalized = normalizeStatus(status);
+  return normalized
+    .replace(/_/g, ' ')
+    .toLowerCase()
+    .split(' ')
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(' ');
+}
+
 async function loadDashboardSummary() {
   const fallback = {
     counts: {
@@ -42,6 +70,7 @@ async function loadDashboardSummary() {
       id: appointment.id,
       patientName: appointment.patient?.name || 'Unknown',
       patientPhone: appointment.patient?.phone || '',
+      status: appointment.status ?? 'PENDING',
       time: appointment.time instanceof Date
         ? appointment.time.toISOString().slice(11, 16)
         : appointment.time,
@@ -129,7 +158,12 @@ export default async function DashboardPage() {
                     <p className="font-medium text-slate-800">{appointment.patientName}</p>
                     <p className="text-xs text-slate-500">{appointment.patientPhone || '--'}</p>
                   </div>
-                  <span className="rounded-full bg-slate-100 px-3 py-1 text-slate-600">{appointment.time}</span>
+                  <div className="flex items-center gap-2">
+                    <span className="rounded-full bg-slate-100 px-3 py-1 text-slate-600">{appointment.time}</span>
+                    <span className={`rounded-full px-3 py-1 text-xs font-semibold ring-1 ring-inset ${getStatusClasses(appointment.status)}`}>
+                      {formatStatusLabel(appointment.status)}
+                    </span>
+                  </div>
                 </div>
               ))
             )}
