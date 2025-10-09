@@ -77,3 +77,4 @@
 - Cleared all billing sessions and line items via script (scripts/clear-sessions.js) to restart session listing cleanly.
 - Session medicine picker: show current quantity and status (Low/Medium/Good) per medicine; frontend-only.
 - Session create form: appointment dropdown now shows only today’s appointments (status PENDING).
+- When creating a session for an appointment, mark that appointment as COMPLETED (best effort update).

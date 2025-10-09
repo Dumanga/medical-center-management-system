@@ -657,6 +657,7 @@ export default function SessionEditor({
       setSubmitErrors([]);
 
       const payload = {
+        appointmentId: form.appointmentId ? Number.parseInt(form.appointmentId, 10) : null,
         patientId: form.patientId ? Number.parseInt(form.patientId, 10) : null,
         date: form.date ? new Date(form.date).toISOString() : new Date().toISOString(),
         description: form.description,

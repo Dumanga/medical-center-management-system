@@ -175,6 +175,7 @@ export async function POST(request) {
     }
 
     const { patientId, date, description, discount, appointmentCharge, total, items, medicines } = validation.values;
+    const appointmentId = parsePositiveInt(payload?.appointmentId);
 
     const created = await prisma.session.create({
       data: {
@@ -219,6 +220,21 @@ export async function POST(request) {
     });
 
     // Note: No automatic appointment status updates on session creation
+
+    // If this session is linked to an appointment, mark it as COMPLETED (best effort)
+    if (appointmentId) {
+      try {
+        const result = await prisma.appointment.updateMany({
+          where: { id: appointmentId },
+          data: { status: 'COMPLETED' },
+        });
+        if (!result.count) {
+          console.warn(`Appointment ${appointmentId} not updated to COMPLETED (not found or unchanged).`);
+        }
+      } catch (err) {
+        console.warn(`Unable to mark appointment ${appointmentId} as COMPLETED:`, err?.message ?? err);
+      }
+    }
 
     return NextResponse.json({ data: serializeSession(created) }, { status: 201 });
   } catch (error) {
