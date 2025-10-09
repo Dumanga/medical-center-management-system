@@ -290,7 +290,6 @@ export default function SessionsView({
                 <th className="px-4 py-3">Session</th>
                 <th className="px-4 py-3">Patient</th>
                 <th className="px-4 py-3">Status</th>
-                <th className="px-4 py-3">Treatments</th>
                 <th className="px-4 py-3">Discount</th>
                 <th className="px-4 py-3">Total</th>
                 <th className="px-4 py-3">Created</th>
@@ -300,7 +299,7 @@ export default function SessionsView({
             <tbody className="divide-y divide-slate-100 text-sm text-slate-700">
               {sessions.length === 0 && !isLoading ? (
                 <tr>
-                  <td colSpan={8} className="px-4 py-6 text-center text-slate-500">
+                  <td colSpan={7} className="px-4 py-6 text-center text-slate-500">
                     No billing sessions recorded yet. Create a session to generate your first invoice.
                   </td>
                 </tr>
@@ -327,9 +326,6 @@ export default function SessionsView({
                         Payment Pending
                       </span>
                     )}
-                  </td>
-                  <td className="px-4 py-3 text-slate-500">
-                    {(session.items?.length ?? 0) + (session.medicineItems?.length ?? 0)} items
                   </td>
                   <td className="px-4 py-3 text-slate-500">{formatCurrency(session.discount ?? 0)}</td>
                   <td className="px-4 py-3 font-semibold text-slate-900">{formatCurrency(session.total ?? 0)}</td>

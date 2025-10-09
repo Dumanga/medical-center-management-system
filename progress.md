@@ -72,3 +72,4 @@
 - Updated invoice PDF summary to remove Subtotal and relabel category lines (Treatment Subtotal ? Treatments, Medicine Subtotal ? Medicines) while keeping Total Due intact.
 - No calculation changes; only display adjustments. Verified no schema or API changes required.
 
+- Removed 'Treatments' column from Billing Sessions listing table; simplified columns to Session, Patient, Status, Discount, Total, Created, Action.
