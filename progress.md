@@ -86,3 +86,4 @@
 - Fix: reporting page imports client ReportingView directly (no dynamic ssr:false) to satisfy Server Components rules.
 - Dashboard: Today’s Appointments now display patient name, phone number, and time.
 - Dashboard: Today’s Appointments show status badge per appointment (Pending/Confirmed/Cancelled/Completed).
+- Dashboard: set Completed status badge to green (emerald) for Today’s Appointments.
