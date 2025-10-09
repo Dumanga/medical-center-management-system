@@ -106,24 +106,56 @@ export async function PATCH(_request, { params }) {
       return NextResponse.json({ message: 'Session not found.' }, { status: 404 });
     }
 
-    // Award loyalty points only when transitioning from unpaid -> paid
-    let pointsCentsToAdd = 0;
     if (isPaid === true && existing.isPaid !== true) {
-      const totalNumber = decimalToNumber(existing.total) ?? 0;
-      // points = round((total / 100), 2). Store as cents to keep precision in Int column
-      // This simplifies to rounding the total currency amount to nearest integer for cent-points storage
-      pointsCentsToAdd = Math.round(totalNumber);
-    }
+      await prisma.$transaction(async (tx) => {
+        // 1) Mark session as paid
+        await tx.$executeRawUnsafe('UPDATE `Session` SET `isPaid` = 1 WHERE `id` = ? LIMIT 1', id);
 
-    // Update session isPaid flag
-    await prisma.$executeRawUnsafe('UPDATE `Session` SET `isPaid` = ? WHERE `id` = ? LIMIT 1', isPaid ? 1 : 0, id);
+        // 2) Award loyalty points
+        const totalNumber = decimalToNumber(existing.total) ?? 0;
+        const pointsCentsToAdd = Math.round(totalNumber);
+        if (pointsCentsToAdd > 0 && existing.patientId) {
+          await tx.patient.update({
+            where: { id: existing.patientId },
+            data: { loyaltyPoints: { increment: pointsCentsToAdd } },
+          });
+        }
 
-    // Increment patient loyalty points (stored as integer cent-points)
-    if (pointsCentsToAdd > 0 && existing.patientId) {
-      await prisma.patient.update({
-        where: { id: existing.patientId },
-        data: { loyaltyPoints: { increment: pointsCentsToAdd } },
+        // 3) Deduct medicine stock quantities used in this session (if any)
+        const medItems = await tx.sessionMedicine.findMany({
+          where: { sessionId: id },
+          select: { medicineId: true, quantity: true },
+        });
+        if (medItems.length > 0) {
+          const totals = new Map();
+          for (const item of medItems) {
+            const key = item.medicineId;
+            totals.set(key, (totals.get(key) || 0) + (item.quantity || 0));
+          }
+          const medicineIds = Array.from(totals.keys());
+          if (medicineIds.length > 0) {
+            const stocks = await tx.medicineStock.findMany({
+              where: { id: { in: medicineIds } },
+              select: { id: true, quantity: true },
+            });
+            for (const stock of stocks) {
+              const sold = totals.get(stock.id) || 0;
+              if (sold > 0) {
+                const decrement = Math.min(stock.quantity || 0, sold);
+                if (decrement > 0) {
+                  await tx.medicineStock.update({
+                    where: { id: stock.id },
+                    data: { quantity: { decrement } },
+                  });
+                }
+              }
+            }
+          }
+        }
       });
+    } else {
+      // If not transitioning to paid, just set the flag to requested value
+      await prisma.$executeRawUnsafe('UPDATE `Session` SET `isPaid` = ? WHERE `id` = ? LIMIT 1', isPaid ? 1 : 0, id);
     }
 
     // Re-fetch related data for response (Prisma client might not expose isPaid yet)
