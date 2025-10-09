@@ -27,6 +27,7 @@ export default function MedicinePickerModal({
   onCreateMedicine,
 }) {
   const [searchTerm, setSearchTerm] = useState('');
+  const [enrichedMedicines, setEnrichedMedicines] = useState(medicines ?? []);
   const getStatus = useCallback((quantity) => {
     const q = Number(quantity) || 0;
     if (q <= 10) {
@@ -44,6 +45,35 @@ export default function MedicinePickerModal({
     }
   }, [isOpen]);
 
+  // Keep local copy in sync
+  useEffect(() => {
+    setEnrichedMedicines(medicines ?? []);
+  }, [medicines]);
+
+  // On open, fetch latest stock quantities and merge into local list (frontend-only enhancement)
+  useEffect(() => {
+    if (!isOpen) return;
+    let abort = false;
+    (async () => {
+      try {
+        const params = new URLSearchParams({ page: '1', pageSize: '1000' });
+        const response = await fetch(`/api/stocks?${params.toString()}`, { method: 'GET', headers: { 'Content-Type': 'application/json' } });
+        const payload = await response.json().catch(() => ({}));
+        if (!response.ok || !payload?.data) return;
+        const qtyById = new Map(payload.data.map((s) => [String(s.id), Number(s.quantity) || 0]));
+        if (!abort) {
+          setEnrichedMedicines((prev) => (prev || []).map((m) => ({
+            ...m,
+            quantity: qtyById.has(String(m.id)) ? qtyById.get(String(m.id)) : (Number(m.quantity) || 0),
+          })));
+        }
+      } catch (_err) {
+        // ignore; fallback to provided quantities
+      }
+    })();
+    return () => { abort = true; };
+  }, [isOpen]);
+
   const selectedIdsSet = useMemo(
     () => new Set(selectedMedicineIds.map((id) => String(id))),
     [selectedMedicineIds],
@@ -52,16 +82,16 @@ export default function MedicinePickerModal({
   const filteredMedicines = useMemo(() => {
     const query = searchTerm.trim().toLowerCase();
     if (!query) {
-      return medicines;
+      return enrichedMedicines;
     }
 
-    return medicines.filter((medicine) => {
+    return enrichedMedicines.filter((medicine) => {
       const name = medicine.name?.toLowerCase?.() ?? '';
       const code = medicine.code?.toLowerCase?.() ?? '';
       const typeName = medicine.type?.name?.toLowerCase?.() ?? '';
       return name.includes(query) || code.includes(query) || typeName.includes(query);
     });
-  }, [medicines, searchTerm]);
+  }, [enrichedMedicines, searchTerm]);
 
   const handleAdd = useCallback(
     (medicine) => {
