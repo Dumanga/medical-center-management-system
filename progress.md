@@ -74,3 +74,4 @@
 
 - Removed 'Treatments' column from Billing Sessions listing table; simplified columns to Session, Patient, Status, Discount, Total, Created, Action.
 - Stocks: added computed Status (Low/Medium/Good) column based on quantity (frontend-only); shows badge in list and preview in add/edit modal.
+- Cleared all billing sessions and line items via script (scripts/clear-sessions.js) to restart session listing cleanly.
