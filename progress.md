@@ -81,3 +81,6 @@
 - Fix: session medicine picker now shows accurate stock quantity by serializing numeric quantity from server (avoids undefined -> 0).
 - Fix: session appointment picker refresh now requests only today’s PENDING appointments via /api/appointments?status=PENDING&date=YYYY-MM-DD; API now supports status filter.
 - Critical: when marking a session as Paid, deduct medicine stock quantities used in that session (idempotent; only on first paid transition).
+- Reporting: added Session Report and Medicine Stock Report with Tailwind UI (report type selector, from/to date, Create Report), results table, and A4 PDF export via Playwright.
+- Reporting API: /api/reports/sessions and /api/reports/medicines with date range filters; corresponding PDF routes under /api/reports/*/pdf.
+- Fix: reporting page imports client ReportingView directly (no dynamic ssr:false) to satisfy Server Components rules.
