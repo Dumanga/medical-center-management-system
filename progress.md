@@ -84,3 +84,4 @@
 - Reporting: added Session Report and Medicine Stock Report with Tailwind UI (report type selector, from/to date, Create Report), results table, and A4 PDF export via Playwright.
 - Reporting API: /api/reports/sessions and /api/reports/medicines with date range filters; corresponding PDF routes under /api/reports/*/pdf.
 - Fix: reporting page imports client ReportingView directly (no dynamic ssr:false) to satisfy Server Components rules.
+- Dashboard: Today’s Appointments now display patient name, phone number, and time.

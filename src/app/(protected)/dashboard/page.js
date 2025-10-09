@@ -41,6 +41,7 @@ async function loadDashboardSummary() {
     const todayAppointments = appointments.map((appointment) => ({
       id: appointment.id,
       patientName: appointment.patient?.name || 'Unknown',
+      patientPhone: appointment.patient?.phone || '',
       time: appointment.time instanceof Date
         ? appointment.time.toISOString().slice(11, 16)
         : appointment.time,
@@ -124,7 +125,10 @@ export default async function DashboardPage() {
                   key={appointment.id}
                   className="flex items-center justify-between rounded-lg border border-slate-100 bg-white px-4 py-3 text-sm shadow-sm"
                 >
-                  <span className="font-medium text-slate-800">{appointment.patientName}</span>
+                  <div>
+                    <p className="font-medium text-slate-800">{appointment.patientName}</p>
+                    <p className="text-xs text-slate-500">{appointment.patientPhone || '--'}</p>
+                  </div>
                   <span className="rounded-full bg-slate-100 px-3 py-1 text-slate-600">{appointment.time}</span>
                 </div>
               ))
