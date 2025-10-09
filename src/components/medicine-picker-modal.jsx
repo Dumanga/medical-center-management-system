@@ -27,6 +27,16 @@ export default function MedicinePickerModal({
   onCreateMedicine,
 }) {
   const [searchTerm, setSearchTerm] = useState('');
+  const getStatus = useCallback((quantity) => {
+    const q = Number(quantity) || 0;
+    if (q <= 10) {
+      return { label: 'Low', bg: 'bg-rose-50', text: 'text-rose-700', ring: 'ring-rose-200' };
+    }
+    if (q <= 20) {
+      return { label: 'Medium', bg: 'bg-amber-50', text: 'text-amber-700', ring: 'ring-amber-200' };
+    }
+    return { label: 'Good', bg: 'bg-emerald-50', text: 'text-emerald-700', ring: 'ring-emerald-200' };
+  }, []);
 
   useEffect(() => {
     if (!isOpen) {
@@ -124,6 +134,8 @@ export default function MedicinePickerModal({
                       <th className="px-4 py-3">Medicine</th>
                       <th className="px-4 py-3">Code</th>
                       <th className="px-4 py-3">Type</th>
+                      <th className="px-4 py-3">Quantity</th>
+                      <th className="px-4 py-3">Status</th>
                       <th className="px-4 py-3">Price</th>
                       <th className="px-4 py-3 text-right">Action</th>
                     </tr>
@@ -131,7 +143,7 @@ export default function MedicinePickerModal({
                   <tbody className="divide-y divide-slate-100 text-sm text-slate-700">
                     {filteredMedicines.length === 0 ? (
                       <tr>
-                        <td colSpan={5} className="px-4 py-8 text-center text-slate-500">
+                        <td colSpan={7} className="px-4 py-8 text-center text-slate-500">
                           No medicines match your search. Adjust the keywords or create a new stock item.
                         </td>
                       </tr>
@@ -143,6 +155,20 @@ export default function MedicinePickerModal({
                             <td className="px-4 py-3 font-medium text-slate-900">{medicine.name}</td>
                             <td className="px-4 py-3 text-slate-500">{medicine.code}</td>
                             <td className="px-4 py-3 text-slate-500">{medicine.type?.name ?? '—'}</td>
+                            <td className="px-4 py-3">{medicine.quantity ?? 0}</td>
+                            <td className="px-4 py-3">
+                              {(() => {
+                                const q = Number(medicine.quantity) || 0;
+                                let bg = 'bg-emerald-50', text = 'text-emerald-700', ring = 'ring-emerald-200', label = 'Good';
+                                if (q <= 10) { bg = 'bg-rose-50'; text = 'text-rose-700'; ring = 'ring-rose-200'; label = 'Low'; }
+                                else if (q <= 20) { bg = 'bg-amber-50'; text = 'text-amber-700'; ring = 'ring-amber-200'; label = 'Medium'; }
+                                return (
+                                  <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1 ring-inset ${bg} ${text} ${ring}`}>
+                                    {label}
+                                  </span>
+                                );
+                              })()}
+                            </td>
                             <td className="px-4 py-3 font-semibold text-slate-900">
                               {formatCurrency(Number(medicine.sellingPrice ?? 0))}
                             </td>
@@ -170,4 +196,3 @@ export default function MedicinePickerModal({
     </div>
   );
 }
-

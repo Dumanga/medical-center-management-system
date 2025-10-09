@@ -177,6 +177,7 @@ async function loadInitialData(searchParamsPromise) {
     id: medicine.id,
     name: medicine.name,
     code: medicine.code,
+    quantity: medicine.quantity,
     sellingPrice: decimalToNumber(medicine.sellingPrice),
     type: medicine.type
       ? {
