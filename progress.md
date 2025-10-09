@@ -87,3 +87,4 @@
 - Dashboard: Today’s Appointments now display patient name, phone number, and time.
 - Dashboard: Today’s Appointments show status badge per appointment (Pending/Confirmed/Cancelled/Completed).
 - Dashboard: set Completed status badge to green (emerald) for Today’s Appointments.
+- Appointments: set Completed status badge to green on listing page.
