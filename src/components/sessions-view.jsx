@@ -292,8 +292,9 @@ export default function SessionsView({
               aria-label="Refresh"
               className="inline-flex items-center justify-center rounded-lg border border-slate-200 p-2 text-slate-600 shadow-sm transition hover:border-sky-200 hover:bg-sky-50 hover:text-sky-600"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-4 w-4">
-                <path d="M3.75 3a.75.75 0 011.5 0v2.19A8.25 8.25 0 1120.25 12a.75.75 0 011.5 0 9.75 9.75 0 10-16.5 7.057V21a.75.75 0 01-1.5 0V3z"/>
+              {/* Heroicons ArrowPath (refresh) */}
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`}>
+                <path stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992V4.356M2.985 14.652v4.992h4.992M20.314 9.348A8.25 8.25 0 004.51 6.51M3.686 14.652a8.25 8.25 0 0015.804 2.838"/>
               </svg>
             </button>
           </form>
