@@ -49,16 +49,11 @@ async function loadDashboardSummary() {
     const endOfDay = new Date(startOfDay);
     endOfDay.setDate(endOfDay.getDate() + 1);
 
-    const [patients, treatments, appointments, sessions] = await Promise.all([
+    const settled = await Promise.allSettled([
       prisma.patient.count(),
       prisma.treatment.count(),
       prisma.appointment.findMany({
-        where: {
-          date: {
-            gte: startOfDay,
-            lt: endOfDay,
-          },
-        },
+        where: { date: { gte: startOfDay, lt: endOfDay } },
         include: { patient: true },
         orderBy: [{ time: 'asc' }],
       }),
@@ -68,6 +63,17 @@ async function loadDashboardSummary() {
         take: 5,
       })
     ]);
+
+    const allRejected = settled.every((r) => r.status === 'rejected');
+    if (allRejected) {
+      console.error('Dashboard: all core queries failed', settled.map((r) => r.status === 'rejected' ? (r.reason?.message || r.reason) : 'ok'));
+      return { ...fallback, hasError: true };
+    }
+
+    const patients = settled[0].status === 'fulfilled' ? settled[0].value : 0;
+    const treatments = settled[1].status === 'fulfilled' ? settled[1].value : 0;
+    const appointments = settled[2].status === 'fulfilled' ? settled[2].value : [];
+    const sessions = settled[3].status === 'fulfilled' ? settled[3].value : [];
 
     const todayAppointments = appointments.map((appointment) => ({
       id: appointment.id,
