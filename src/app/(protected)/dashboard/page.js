@@ -49,7 +49,7 @@ async function loadDashboardSummary() {
     const endOfDay = new Date(startOfDay);
     endOfDay.setDate(endOfDay.getDate() + 1);
 
-    const [patients, treatments, appointments, sessions, inventoryValueRows, expectedRevenueRows] = await Promise.all([
+    const [patients, treatments, appointments, sessions] = await Promise.all([
       prisma.patient.count(),
       prisma.treatment.count(),
       prisma.appointment.findMany({
@@ -66,9 +66,7 @@ async function loadDashboardSummary() {
         include: { patient: true },
         orderBy: [{ date: 'desc' }],
         take: 5,
-      }),
-      prisma.$queryRaw`SELECT COALESCE(SUM(quantity * incomingPrice), 0) AS totalValue FROM MedicineStock`,
-      prisma.$queryRaw`SELECT COALESCE(SUM(quantity * sellingPrice), 0) AS totalRevenue FROM MedicineStock`,
+      })
     ]);
 
     const todayAppointments = appointments.map((appointment) => ({
@@ -88,10 +86,22 @@ async function loadDashboardSummary() {
       date: session.date instanceof Date ? session.date.toISOString().split('T')[0] : session.date,
     }));
 
-    const invRow = Array.isArray(inventoryValueRows) ? inventoryValueRows[0] : inventoryValueRows;
-    const expRow = Array.isArray(expectedRevenueRows) ? expectedRevenueRows[0] : expectedRevenueRows;
-    const inventoryValue = typeof invRow?.totalValue?.toNumber === 'function' ? invRow.totalValue.toNumber() : Number(invRow?.totalValue ?? 0);
-    const expectedRevenue = typeof expRow?.totalRevenue?.toNumber === 'function' ? expRow.totalRevenue.toNumber() : Number(expRow?.totalRevenue ?? 0);
+    let inventoryValue = 0;
+    let expectedRevenue = 0;
+    try {
+      const stocks = await prisma.medicineStock.findMany({
+        select: { quantity: true, incomingPrice: true, sellingPrice: true },
+      });
+      for (const s of stocks) {
+        const qty = Number(s.quantity || 0);
+        const inP = typeof s.incomingPrice?.toNumber === 'function' ? s.incomingPrice.toNumber() : Number(s.incomingPrice || 0);
+        const seP = typeof s.sellingPrice?.toNumber === 'function' ? s.sellingPrice.toNumber() : Number(s.sellingPrice || 0);
+        inventoryValue += qty * inP;
+        expectedRevenue += qty * seP;
+      }
+    } catch (kpiError) {
+      console.warn('Stock KPI query failed (non-blocking):', kpiError?.message || kpiError);
+    }
 
     return {
       counts: {
