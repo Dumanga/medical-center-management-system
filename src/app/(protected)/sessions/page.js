@@ -1,4 +1,5 @@
 import prisma from '@/lib/prisma';
+export const dynamic = 'force-dynamic';
 import SessionsView from '@/components/sessions-view';
 
 export const metadata = {

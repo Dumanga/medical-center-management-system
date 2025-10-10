@@ -1,4 +1,5 @@
-﻿import prisma from '@/lib/prisma';
+import prisma from '@/lib/prisma';
+export const dynamic = 'force-dynamic';
 import StocksView from '@/components/stocks-view';
 
 export const metadata = {
@@ -131,4 +132,5 @@ export default async function StocksPage({ searchParams }) {
     />
   );
 }
+
 

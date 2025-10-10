@@ -1,9 +1,12 @@
 {
   "functions": {
-    "src/app/api/sessions/[id]/invoice/route.js": {
+    "src/app/**/route.js": {
       "memory": 1536,
-      "maxDuration": 60,
-      "runtime": "nodejs18.x"
+      "maxDuration": 60
+    },
+    "src/app/**/route.ts": {
+      "memory": 1536,
+      "maxDuration": 60
     }
   }
 }
