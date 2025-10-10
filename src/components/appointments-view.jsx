@@ -72,6 +72,54 @@ export default function AppointmentsView({ initialData, initialMeta }) {
     setToDate(initialMeta?.to ?? '');
   }, [initialData, initialMeta]);
 
+  // No preference stored; always use WhatsApp Desktop flow
+
+  const getWhatsAppUrl = useCallback((appointment) => {
+    const phoneRaw = appointment?.patient?.phone ?? '';
+    const digits = String(phoneRaw).replace(/\D/g, '');
+    const name = appointment?.patient?.name ?? 'Patient';
+    const dateText = appointment?.date ?? '';
+    const timeText = appointment?.time ?? '';
+    const message = `Hi ${name}, your appointment is on ${dateText} at ${timeText}. Clinic: Sri Ayurveda.`;
+    const desktopUrl = `whatsapp://send?phone=${digits}&text=${encodeURIComponent(message)}`;
+    return { desktopUrl, hasDigits: Boolean(digits) };
+  }, []);
+
+  const sendToWhatsAppHelper = useCallback((appointment) => {
+    const { desktopUrl, hasDigits } = getWhatsAppUrl(appointment);
+    if (!hasDigits) {
+      alert('No valid WhatsApp number for this patient.');
+      return;
+    }
+    try {
+      // Trigger external WhatsApp Desktop via hidden iframe only (no browser fallback)
+      const iframe = document.createElement('iframe');
+      iframe.style.display = 'none';
+      iframe.src = desktopUrl;
+      document.body.appendChild(iframe);
+      setTimeout(() => {
+        try { document.body.removeChild(iframe); } catch (_) {}
+      }, 1500);
+    } catch (err) {
+      console.error('WhatsApp open failed', err);
+    }
+  }, [getWhatsAppUrl]);
+
+  const openWhatsAppHelper = useCallback(() => {
+    try {
+      const features = 'width=1200,height=900';
+      const win = window.open('https://web.whatsapp.com/', 'waHelper', features);
+      if (win) {
+        window.waHelper = win;
+        try { win.focus(); } catch (_) {}
+      } else {
+        alert('Popup blocked. Please allow popups for this site to open WhatsApp Web.');
+      }
+    } catch (err) {
+      console.error('Failed to open WhatsApp helper window', err);
+    }
+  }, []);
+
   const fetchAppointments = useCallback(
     async ({ page, query, from, to } = {}) => {
       setLoading(true);
@@ -309,8 +357,11 @@ export default function AppointmentsView({ initialData, initialMeta }) {
           </button>
         </form>
 
-        <div className="mt-3 text-xs text-slate-500">
-          Total appointments: <span className="font-semibold text-slate-700">{meta.totalCount}</span>
+        <div className="mt-3 flex flex-col items-start justify-between gap-2 sm:flex-row sm:items-center">
+          <div className="text-xs text-slate-500">
+            Total appointments: <span className="font-semibold text-slate-700">{meta.totalCount}</span>
+          </div>
+          <div className="flex items-center gap-2" />
         </div>
 
         {error ? (
@@ -360,13 +411,20 @@ export default function AppointmentsView({ initialData, initialMeta }) {
                       <span className="italic text-slate-400">No notes</span>
                     )}
                   </td>
-                  <td className="px-4 py-3">
-                    <div className="flex gap-2">
-                      <button
-                        type="button"
-                        onClick={() => handleOpenEditModal(appointment)}
-                        className="rounded-lg border border-slate-200 px-3 py-1 text-xs font-semibold text-slate-600 shadow-sm transition hover:border-sky-200 hover:bg-sky-50 hover:text-sky-600"
-                      >
+                <td className="px-4 py-3">
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => sendToWhatsAppHelper(appointment)}
+                      className="rounded-lg border border-emerald-200 px-3 py-1 text-xs font-semibold text-emerald-600 shadow-sm transition hover:border-emerald-300 hover:bg-emerald-50"
+                    >
+                      WhatsApp
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleOpenEditModal(appointment)}
+                      className="rounded-lg border border-slate-200 px-3 py-1 text-xs font-semibold text-slate-600 shadow-sm transition hover:border-sky-200 hover:bg-sky-50 hover:text-sky-600"
+                    >
                         Edit
                       </button>
                       <button

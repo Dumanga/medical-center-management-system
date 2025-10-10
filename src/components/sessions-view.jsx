@@ -124,6 +124,10 @@ export default function SessionsView({
     [searchTerm],
   );
 
+  const handleManualRefresh = useCallback(async () => {
+    await fetchRef.current?.({ page: 1, query: searchTerm.trim() });
+  }, [searchTerm]);
+
   const handlePageChange = useCallback(
     async (page) => {
       await fetchRef.current?.({ page });
@@ -280,6 +284,17 @@ export default function SessionsView({
               className="rounded-lg border border-slate-200 px-4 py-2 text-sm font-medium text-slate-600 shadow-sm transition hover:border-sky-200 hover:bg-sky-50 hover:text-sky-600"
             >
               Search
+            </button>
+            <button
+              type="button"
+              onClick={handleManualRefresh}
+              title="Refresh"
+              aria-label="Refresh"
+              className="inline-flex items-center justify-center rounded-lg border border-slate-200 p-2 text-slate-600 shadow-sm transition hover:border-sky-200 hover:bg-sky-50 hover:text-sky-600"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-4 w-4">
+                <path d="M3.75 3a.75.75 0 011.5 0v2.19A8.25 8.25 0 1120.25 12a.75.75 0 011.5 0 9.75 9.75 0 10-16.5 7.057V21a.75.75 0 01-1.5 0V3z"/>
+              </svg>
             </button>
           </form>
         </div>

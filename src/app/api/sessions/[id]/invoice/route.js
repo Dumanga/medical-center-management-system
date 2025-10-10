@@ -8,6 +8,15 @@ export const runtime = 'nodejs';
 
 const LOGO_PATH = path.join(process.cwd(), 'public', 'invoice-logo.png');
 
+const COMPANY = {
+  name: 'Sri Ayurveda (Pvt) Ltd',
+  address: '3/M 26, NHS, 2nd Main Road, Kiribathgoda',
+  regNo: '00335288',
+  email: 'sriayurveda96@gmail.com',
+  phone: '+94 72 499 9970',
+  tagline: 'The Power to Heal, To Restore, To Relax the Humanity',
+};
+
 function getLogoDataUrl() {
   try {
     const file = fs.readFileSync(LOGO_PATH);
@@ -107,7 +116,7 @@ function buildInvoiceHtml(session) {
       }
       body {
         margin: 0;
-        padding: 4mm 5mm;
+        padding: 0; /* allow header to sit at absolute top and full width */
         background: #ffffff;
         font-size: 11.5px;
       }
@@ -134,40 +143,52 @@ function buildInvoiceHtml(session) {
         max-width: 380px;
         filter: saturate(0.9);
       }
-      header {
-        display: flex;
-        justify-content: space-between;
-        align-items: flex-start;
-        gap: 18px;
-      }
-      .brand {
+      /* Full‑width, vertically‑centered, modern header with textured gradient + wave */
+      .header-wide {
+        position: relative;
+        width: 100%;
+        margin: 0 0 10px 0; /* gap below header */
+        padding: 0 14mm; /* horizontal padding; vertical via min-height */
+        min-height: 42mm; /* slightly shorter to reduce perceived gap */
         display: flex;
         align-items: center;
-        gap: 16px;
+        justify-content: center;
+        background: linear-gradient(165deg, #3c7fa4 0%, #2a6b8d 45%, #245d7b 100%);
+        overflow: hidden;
       }
-      .brand img {
-        width: 120px;
-        height: 120px;
-        border-radius: 28px;
-        box-shadow: 0 12px 28px rgba(15, 23, 42, 0.15);
+      /* Bubble highlights */
+      .header-wide::before,
+      .header-wide::after {
+        content: '';
+        position: absolute;
+        border-radius: 50%;
+        filter: blur(0.5px);
+        opacity: .18;
+        pointer-events: none;
       }
-      .brand-text h1 {
-        font-size: 24px;
-        margin: 0;
-        letter-spacing: 0.14em;
-        text-transform: uppercase;
-        color: #0f172a;
+      .header-wide::before {
+        width: 240px; height: 240px;
+        top: -70px; left: -60px;
+        background: radial-gradient(closest-side, rgba(255,255,255,.28), rgba(255,255,255,0));
       }
-      .brand-text p {
-        margin: 8px 0 0;
-        font-size: 11.5px;
-        color: #4b5563;
+      .header-wide::after {
+        width: 320px; height: 320px;
+        bottom: -120px; right: -80px;
+        background: radial-gradient(closest-side, rgba(255,255,255,.22), rgba(255,255,255,0));
       }
-      .invoice-meta {
-        text-align: right;
-        font-size: 11px;
-        color: #475569;
+      .header-wide .center { text-align: center; position: relative; z-index: 2; }
+      .header-wide .logo-wrap{ margin: 2px auto 4px auto; line-height: 0; }
+      .header-wide .logo {
+        width: 130px; /* increase logo image size */
+        height: 130px;
+        object-fit: contain;
       }
+      .header-wide .address { font-size: 13.5px; font-weight: 700; color:#0e1a2a; margin: -10px 0 0 0; }
+      .header-wide .reg { font-size: 12.5px; margin: 2px 0; font-weight: 700; color:#0e1a2a; }
+      .header-wide .reg b { font-weight: 700; }
+      .header-wide .contact { font-size: 12.5px; margin-top: 2px; margin-bottom:5px; font-weight: 700; color:#10233b; }
+
+      /* Straight bottom edge for header (wave removed) */
       .section {
         display: grid;
         gap: 16px;
@@ -261,21 +282,17 @@ function buildInvoiceHtml(session) {
     </style>
   </head>
   <body>
-      <div class="invoice">
-      <div class="watermark"><img src="${logoSrc}" alt="Sri Ayurveda watermark" /></div>
-      <header>
-        <div class="brand">
-          <img src="${logoSrc}" alt="Clinic Logo" />
-          <div class="brand-text">
-            <h1>SRI AYURVEDA</h1>
-            <p>Invoice</p>
-          </div>
+      <header class="header-wide">
+        <div class="center">
+          <div class="logo-wrap"><img class="logo" src="${logoSrc}" alt="Clinic Logo" /></div>
+          <div class="address">${COMPANY.address.replace('2nd', '2ND')}</div>
+          <div class="reg">Reg No: <b>${COMPANY.regNo}</b></div>
+          <div class="contact">${COMPANY.email} &nbsp; | &nbsp; ${COMPANY.phone}</div>
         </div>
-        <div class="invoice-meta">
-          <div>Invoice #: ${session.id.toString().padStart(4, '0')}</div>
-          <div>Generated: ${createdDate}</div>
-        </div>
+        
       </header>
+      <div class="invoice" style="padding: 5mm 8mm;">
+      <div class="watermark"><img src="${logoSrc}" alt="Sri Ayurveda watermark" /></div>
 
       <section class="section">
         <div class="info-grid">
@@ -390,10 +407,10 @@ async function generateInvoicePdf(session) {
     return await page.pdf({
       format: 'A5',
       margin: {
-        top: '10mm',
+        top: '0mm',
         bottom: '10mm',
-        left: '8mm',
-        right: '8mm',
+        left: '0mm',
+        right: '0mm',
       },
       printBackground: true,
       preferCSSPageSize: true,

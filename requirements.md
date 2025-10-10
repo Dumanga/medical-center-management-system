@@ -347,3 +347,15 @@ The following database credentials should be used for the setup:
 - **Password:** Ravindra#7808
 - **Host:** localhost
 - **Port:** 3306
+
+## Company Details
+
+**Company Name:** Sri Ayurveda (Pvt) Ltd  
+**Address:** 3/M 26, NHS, 2nd Main Road, Kiribathgoda  
+**Registered Number:** 00335288  
+
+**Contact Information:**  
+- **Email:** sriayurveda96@gmail.com  
+- **Phone:** +94 72 499 9970  
+
+**Tagline:** The Power to Heal, To Restore, To Relax the Humanity
