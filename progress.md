@@ -90,3 +90,4 @@
 - Appointments: set Completed status badge to green on listing page.
 - Invoice: redesigned header to full-bleed, zero top/side margins, vertically centered stack (logo, address, reg no, contact), refined blue gradient with subtle texture; removed wave divider; increased logo size and tightened spacing.
 - Sessions: added Refresh button next to Search with polished icon and spin on load to refetch the list.
+- Invoice: switched to puppeteer-core + @sparticuz/chromium for Vercel serverless compatibility; added vercel.json function config (memory/timeout).

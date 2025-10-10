@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
-import { chromium } from 'playwright';
+import chromium from '@sparticuz/chromium';
+import puppeteer from 'puppeteer-core';
 import fs from 'fs';
 import path from 'path';
 import prisma from '@/lib/prisma';
@@ -398,20 +399,28 @@ function buildInvoiceHtml(session) {
 }
 
 async function generateInvoicePdf(session) {
-  const browser = await chromium.launch({ headless: true, args: ['--no-sandbox'] });
+  let browser;
+  try {
+    browser = await puppeteer.launch({
+      args: chromium.args,
+      defaultViewport: null,
+      executablePath: await chromium.executablePath(),
+      headless: true,
+    });
+  } catch (e) {
+    try {
+      browser = await puppeteer.launch({ headless: true });
+    } catch (e2) {
+      const { chromium: pwChromium } = await import('playwright');
+      browser = await pwChromium.launch({ headless: true, args: ['--no-sandbox'] });
+    }
+  }
   try {
     const page = await browser.newPage();
-    await page.setContent(buildInvoiceHtml(session), {
-      waitUntil: 'networkidle',
-    });
+    await page.setContent(buildInvoiceHtml(session), { waitUntil: 'networkidle' });
     return await page.pdf({
       format: 'A5',
-      margin: {
-        top: '0mm',
-        bottom: '10mm',
-        left: '0mm',
-        right: '0mm',
-      },
+      margin: { top: '0mm', bottom: '10mm', left: '0mm', right: '0mm' },
       printBackground: true,
       preferCSSPageSize: true,
     });
