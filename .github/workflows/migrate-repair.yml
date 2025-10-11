@@ -18,11 +18,12 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Mark failed migration as rolled back
+      - name: Mark failed migrations as rolled back (idempotent)
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
         run: |
-          npx prisma migrate resolve --rolled-back "20251006171301_add_appointment_status"
+          npx prisma migrate resolve --rolled-back "20251006171301_add_appointment_status" || true
+          npx prisma migrate resolve --rolled-back "20251011112538_add_session_appointmentCharge_isPaid" || true
 
       - name: Deploy migrations
         env:
@@ -36,4 +37,3 @@ jobs:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
         run: |
           npx prisma migrate status || true
-
