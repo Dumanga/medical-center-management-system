@@ -1,0 +1,5 @@
+-- AlterTable
+ALTER TABLE Session
+  ADD COLUMN ppointmentCharge DECIMAL(10, 2) NULL,
+  ADD COLUMN isPaid TINYINT(1) NOT NULL DEFAULT 0;
+
